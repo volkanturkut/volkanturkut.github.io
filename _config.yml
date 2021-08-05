@@ -33,7 +33,7 @@ collections:
     permalink: /:collection/:name
 
 # Build settings
-theme: minima
+theme: Cayman
 plugins:
   - jekyll-feed
 
