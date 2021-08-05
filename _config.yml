@@ -26,6 +26,11 @@ baseurl: "/volkanturkut.github.io/" # the subpath of your site, e.g. /blog
 url: "https://volkanturkut.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: volkanturkut
 github_username:  volkanturkut
+permalink: /:categories/:year/:month/:day/:title:output_ext
+collections:
+  my_collection:
+    output: true
+    permalink: /:collection/:name
 
 # Build settings
 theme: minima
