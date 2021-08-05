@@ -22,7 +22,7 @@ title: DASKOUL
 email: volkan.trkt@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   My personal website.
-baseurl: "/volkanturkut.github.io/" # the subpath of your site, e.g. /blog
+baseurl: "/volkanturkut" # the subpath of your site, e.g. /blog
 url: "https://volkanturkut.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: volkanturkut
 github_username:  volkanturkut
