@@ -1,1 +1,0 @@
-# volkanturkut.github.io
