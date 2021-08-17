@@ -24,10 +24,8 @@ a:link {
   a:hover {
     color: #1DA1F2;
     background-color: transparent;
-    text-decoration: underline;
   }
   a:active {
     color: white
     background-color: transparent;
-    text-decoration: underline;
   }
