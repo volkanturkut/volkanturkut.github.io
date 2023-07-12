@@ -8,7 +8,7 @@ description: A blog about technology and stuff related
 # if it's an external image, update below for true
 # better with square images
 external-image: false
-picture: assets/images/profile.jpg
+picture: assets/images/profile.png
 
 # your site color theme, true for dark theme, 
 # false to light theme, auto to switch with system.
@@ -18,9 +18,9 @@ dark-theme: auto
 # and specify source (external or local).
 resume: true
 resume-external: true
-resume-url: https://google.com/?q=my+resume
+resume-url: https://acrobat.adobe.com/link/track?uri=urn:aaid:scds:US:4b51d658-a3f3-444e-bb23-3cf91963d42f
 
-url: https://sergiokopplin.github.io/indigo
+url: https://volkanturkut.github.io/
 # your url: https://USERNAME.github.io
 
 permalink: /:title/
