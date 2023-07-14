@@ -2,12 +2,9 @@
 title: About
 layout: page
 ---
-
-<h1>Volkan Turkut</h1>
-<h1>Game Designer | Developer | Animator</h1>
-
 ![Profile Image]({% if site.external-image %}{{ site.picture }}{% else %}{{ site.url }}/{{ site.picture }}{% endif %})
 
+<h1>Volkan Turkut</h1>
 <h2>Hi! 👋</h2>
 <p>I'm Volkan Turkut. — a game designer, developer and animator... I'm a college student who wants to do something.</p>
 
