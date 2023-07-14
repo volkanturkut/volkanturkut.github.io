@@ -4,11 +4,11 @@ layout: page
 ---
 
 <h1>Volkan Turkut</h1>
-<h2>Game Designer | Developer | Animator</h2>
+<h1>Game Designer | Developer | Animator</h2>
 
 ![Profile Image]({% if site.external-image %}{{ site.picture }}{% else %}{{ site.url }}/{{ site.picture }}{% endif %})
 
-<h1>Hi! 👋</h1>
+<h2>Hi! 👋</h1>
 <p>I'm Volkan Turkut. — a game designer, developer and animator... I'm a college student who wants to do something.</p>
 
 <h2>Skills</h2>
