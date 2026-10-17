@@ -6,7 +6,7 @@
     "super mario bros": "NES", "super mario bros 2": "NES", "super mario bros 3": "NES",
     "super mario world": "SNES", "super mario 64": "Nintendo 64",
     "donkey kong country": "SNES", "donkey kong country 2 diddy s kong quest": "SNES",
-    "donkey kong country 3 dixie kongs double trouble": "SNES", "donkey kong 64": "Nintendo 64",
+    "donkey kong country 3 dixie kong s double trouble": "SNES", "donkey kong 64": "Nintendo 64",
     "star fox": "SNES", "star fox 2": "SNES", "star fox 64": "Nintendo 64",
     "the legend of zelda a link to the past": "SNES",
     "the legend of zelda ocarina of time": "Nintendo 64",
