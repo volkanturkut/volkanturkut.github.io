@@ -1,4 +1,4 @@
-const CACHE_NAME = "savepoint-shell-v1-20261017";
+const CACHE_NAME = "savepoint-shell-v2-20261017";
 const BASE = self.registration.scope;
 const CORE = [
   "./",
