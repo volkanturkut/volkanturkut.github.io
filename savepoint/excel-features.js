@@ -10,7 +10,7 @@
     "star fox": "SNES", "star fox 2": "SNES", "star fox 64": "Nintendo 64",
     "the legend of zelda a link to the past": "SNES",
     "the legend of zelda ocarina of time": "Nintendo 64",
-    "the legend of zelda majoras mask": "Nintendo 64",
+    "the legend of zelda majora s mask": "Nintendo 64",
     "pokemon red version": "Game Boy", "pokemon blue version": "Game Boy",
     "pokemon yellow version": "Game Boy", "pokemon gold version": "Game Boy Color",
     "pokemon silver version": "Game Boy Color", "pokemon crystal version": "Game Boy Color",
@@ -64,6 +64,9 @@
     var existing = currentMatch(r.title);
     if (existing) return { kind: "eligible", label: "Zaten backlog’da", basis: "Mevcut oyun", note: "Bu başlık ana listede mevcut.", existing: existing };
     var p = String(r.platform || "").toLowerCase();
+    if (/switch 1 yerel katalogunda kapsam sorunu|switch 2 sürümü switch 1 sayılmaz/.test(p)) {
+      return { kind: "not", label: "Switch 1 uygunluğu doğrulanmadı", basis: "Switch 2 / bölgesel erişim istisnası", note: r.platform };
+    }
     if (/switch 1/.test(p) && /(yerel|koleksiyon|ayrı dijital)/.test(p)) {
       return { kind: "eligible", label: "Switch 1 uygun", basis: "Yerel sürüm / koleksiyon", note: r.platform };
     }
@@ -141,6 +144,8 @@
     return excelData && excelData.audit.find(function (r) { return norm(r.title) === norm(title); });
   }
   function excludedEligibility(r) {
+    var existing = currentMatch(r.title);
+    if (existing) return { kind:"eligible", label:"Zaten backlog’da", basis:"Mevcut oyun", note:"Bu başlık ana listede mevcut.", existing:existing };
     var audit = candidateForTitle(r.title);
     if (audit) return platformClassForCandidate(audit);
     var legacy = nativeLegacy[norm(r.title)];
@@ -266,7 +271,7 @@
       }
       help.classList.add("open");
     }
-    window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferredInstall=e;btn.textContent="＋ Uygulamayı yükle";});
+    window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferredInstall=e;btn.textContent=window.matchMedia("(max-width:700px)").matches?"＋ Yükle":"＋ Uygulamayı yükle";});
     window.addEventListener("appinstalled",function(){standalone=true;deferredInstall=null;btn.textContent="✓ Yüklendi";notify("Savepoint ana ekrana eklendi.");});
     btn.addEventListener("click",async function(){
       if(deferredInstall){
@@ -278,7 +283,7 @@
     el("installClose").addEventListener("click",function(){help.classList.remove("open");});
     help.addEventListener("click",function(e){if(e.target===help)help.classList.remove("open");});
     el("installPromptBtn").addEventListener("click",async function(){if(deferredInstall){deferredInstall.prompt();deferredInstall=null;}});
-    if(standalone)btn.textContent="✓ Uygulama yüklü";
+    if(standalone)btn.textContent="✓ Yüklü"; else if(window.matchMedia("(max-width:700px)").matches)btn.textContent="＋ Yükle";
   }
   function setupNavigation() {
     el("appNav").addEventListener("click",function(e){var b=e.target.closest("[data-app-view]");if(!b)return;setView(b.getAttribute("data-app-view"));});
