@@ -1,10 +1,11 @@
-const CACHE_NAME = "savepoint-shell-v2-20261017";
+const CACHE_NAME = "savepoint-shell-v3-20261017";
 const BASE = self.registration.scope;
 const CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./icon.svg",
+  "./apple-touch-icon.png",
   "./excel-features.js",
   "./excel-data-1.txt",
   "./excel-data-2.txt",
