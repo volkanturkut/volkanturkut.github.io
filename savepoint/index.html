@@ -151,7 +151,7 @@ const STATES=[['','Tümü'],['Not started','Sırada'],['Playing','Oynuyorum'],['
 const LABEL={'Not started':'Sırada','Playing':'Oynuyorum','Completed':'Tamamlandı','Paused':'Duraklatıldı','Skipped':'Pas geçildi'};
 const COLORS=[['#56614a','#1c241e','#c9f36a'],['#4b405d','#1a1823','#b7a4fa'],['#40566b','#181b27','#74d3ef'],['#665043','#231b20','#ffbd8b'],['#6b4052','#221721','#ff9abc'],['#445d5b','#171d24','#92eee0']];
 const STEAM={'TOEM':1307580,'Portal':400,'Portal 2':620,'Untitled Goose Game':837470,'Undertale':391540,'DELTARUNE':1671210,'Celeste':504230,'Bramble: The Mountain King':1623940,'Stray':1332010,'SOMA':282140,'DREDGE':1562430,"Death's Door":894020,'Cuphead':268910,'Alan Wake':108710,'Outlast':238320,'Outlast 2':414700,'Ori and the Blind Forest':261570,'Ori and the Will of the Wisps':1057090,'Hollow Knight':367520,'Hollow Knight: Silksong':1030300,'Batman: Arkham Asylum':35140,'Batman: Arkham City':200260,'Batman™: Arkham Knight':208650,'Resident Evil':304240,'Resident Evil 0':339340,'Resident Evil 2':883710,'Resident Evil 4':2050650,'Resident Evil: Revelations':222480,'Resident Evil 5':21690,'Resident Evil: Revelations 2':287290,'Resident Evil 6':221040,'Phoenix Wright: Ace Attorney Trilogy':787480,'The Great Ace Attorney Chronicles':1158850,'South Park: The Stick of Truth':213670,'South Park™: The Fractured but Whole™':488790,'Ni no Kuni: Wrath of the White Witch':798460,'Subnautica':264710,'Subnautica: Below Zero':848450,'Kingdom: Classic':368230,'Kingdom: New Lands':496300,'Kingdom Two Crowns':701160,'Onimusha: Warlords':761600,'Mega Man Legacy Collection':363440,'Prince of Persia The Lost Crown':2751000,'The Oregon Trail':2013360,'Scribblenauts Mega Pack':1160590,'Slay the Spire':646570,'Vampire Survivors':1794680,'Hades':1145360,'Dead Cells':588650,'Enter the Gungeon':311690,'Risk of Rain 2':632360,'Balatro':2379780,'Stardew Valley':413150,'Terraria':105600,'Noita':881100,'Cult of the Lamb':1313140,'Dave the Diver':1868140,'Factorio':427520,'RimWorld':294100,'What Remains of Edith Finch':501300};
-const KEY='savepoint-switch-backlog-v1';let games=readSaved(),activeStatus='',activePhase='',page=36,view='grid',editing=null,toastTimer;const $=id=>document.getElementById(id);const grid=$('grid');const cache=new Map();const searching=new Map();const coverCache=new Map();try{const seedSteam=JSON.parse(localStorage.getItem('savepoint-steam-id-cache-v1')||'{}');Object.keys(seedSteam).forEach(k=>cache.set(k,seedSteam[k]==null?null:Number(seedSteam[k])))}catch(e){}try{const seedCover=JSON.parse(localStorage.getItem('savepoint-cover-cache-v1')||'{}');Object.keys(seedCover).forEach(k=>coverCache.set(k,seedCover[k]))}catch(e){}let coverQueue=[],activeCoverJobs=0;function queueCoverRequest(job){return new Promise((resolve,reject)=>{coverQueue.push({job,resolve,reject});drainCoverQueue()})}function drainCoverQueue(){while(activeCoverJobs<3&&coverQueue.length){const item=coverQueue.shift();activeCoverJobs++;Promise.resolve().then(item.job).then(item.resolve,item.reject).finally(()=>{activeCoverJobs--;drainCoverQueue()})}}
+const KEY='savepoint-switch-backlog-v1';let games=readSaved(),activeStatus='',activePhase='',page=36,view='grid',editing=null,toastTimer;const $=id=>document.getElementById(id);const grid=$('grid');const cache=new Map();const searching=new Map();const coverCache=new Map();try{const seedSteam=JSON.parse(localStorage.getItem('savepoint-steam-id-cache-v1')||'{}');Object.keys(seedSteam).forEach(k=>cache.set(k,seedSteam[k]==null?null:Number(seedSteam[k])))}catch(e){}try{const seedCover=JSON.parse(localStorage.getItem('savepoint-cover-cache-v2')||'{}');Object.keys(seedCover).forEach(k=>coverCache.set(k,seedCover[k]))}catch(e){}let coverQueue=[],activeCoverJobs=0;function queueCoverRequest(job){return new Promise((resolve,reject)=>{coverQueue.push({job,resolve,reject});drainCoverQueue()})}function drainCoverQueue(){while(activeCoverJobs<3&&coverQueue.length){const item=coverQueue.shift();activeCoverJobs++;Promise.resolve().then(item.job).then(item.resolve,item.reject).finally(()=>{activeCoverJobs--;drainCoverQueue()})}}
 function readSaved(){let old=[];try{const raw=localStorage.getItem(KEY);old=raw?JSON.parse(raw):[]}catch(e){}const rows=Array.isArray(old)?old:[];const map=new Map(rows.map(g=>[+g.order,g]));const known=new Set(SEED.map(s=>s[0]));const seeded=SEED.map(([order,p,group,title])=>{const g=map.get(order)||{};return{order,phase:PHASES[p],group,title,status:STATES.some(s=>s[0]===g.status&&s[0])?g.status:'Not started',rating:Math.max(0,Math.min(5,+g.rating||0)),notes:String(g.notes||''),hltb:g.hltb||null,beforeIPlay:g.beforeIPlay||null,updatedAt:+g.updatedAt||0}});const extras=rows.filter(g=>g&&Number.isFinite(+g.order)&&!known.has(+g.order)).map(g=>({...g,status:STATES.some(s=>s[0]===g.status&&s[0])?g.status:'Not started',rating:Math.max(0,Math.min(5,+g.rating||0)),notes:String(g.notes||'')}));return seeded.concat(extras)}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(games))}catch(e){toast('Tarayıcı alanı dolu; yedek indir.')}}function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function norm(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[™®©]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}function phaseIdx(p){return PHASES.indexOf(p)}function byOrder(n){return games.find(g=>g.order===+n)}function steamImageUrls(id){return [
   `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${id}/library_600x900_2x.jpg`,
@@ -181,7 +181,7 @@ async function resolveSteam(g){
     let controller=null,timer=null;
     try{
       controller=new AbortController();
-      timer=setTimeout(()=>controller.abort(),8000);
+      timer=setTimeout(()=>controller.abort(),4500);
       const res=await fetch('https://store.steampowered.com/api/storesearch/?term='+encodeURIComponent(g.title)+'&l=english&cc=us',{signal:controller.signal,headers:{Accept:'application/json'}});
       if(!res.ok)return null;
       const items=(await res.json()).items||[];
@@ -197,10 +197,21 @@ async function resolveSteam(g){
   searching.set(g.title,task);
   try{return await task}finally{searching.delete(g.title)}
 }
+async function fetchJsonFast(url,timeout=4500){
+  let controller=null,timer=null;
+  try{
+    controller=new AbortController();
+    timer=setTimeout(()=>controller.abort(),timeout);
+    const response=await fetch(url,{signal:controller.signal,headers:{Accept:'application/json'}});
+    if(!response.ok)return null;
+    return await response.json()
+  }catch(e){return null}
+  finally{if(timer)clearTimeout(timer)}
+}
 function rememberCover(key,image){
   if(typeof image!=='string'||!(image.startsWith('https://')||image.startsWith('http://')))return null;
   coverCache.set(key,image);
-  try{const saved=JSON.parse(localStorage.getItem('savepoint-cover-cache-v1')||'{}');saved[key]=image;localStorage.setItem('savepoint-cover-cache-v1',JSON.stringify(saved))}catch(e){}
+  try{const saved=JSON.parse(localStorage.getItem('savepoint-cover-cache-v2')||'{}');saved[key]=image;localStorage.setItem('savepoint-cover-cache-v2',JSON.stringify(saved))}catch(e){}
   return image
 }
 function imageFromWikiPage(p){return (p&&p.thumbnail&&p.thumbnail.source)||(p&&p.original&&p.original.source)||null}
@@ -213,74 +224,64 @@ function titleImageScore(candidate,target){
   let hit=0;aa.forEach(w=>{if(bb.has(w))hit++});
   return aa.size?Math.round(hit/aa.size*70):0
 }
+async function wikiSummaryCover(g){
+  if(!navigator.onLine||location.protocol==='file:')return null;
+  const key=norm(g.title);
+  const title=g.title.replaceAll('™','').replaceAll('®','').replaceAll('©','').trim().replace(/ +/g,'_');
+  const d=await fetchJsonFast('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(title));
+  const image=d&&(d.thumbnail&&d.thumbnail.source||d.originalimage&&d.originalimage.source);
+  return image?rememberCover(key,image):null
+}
 async function wikiDirectCover(g){
   if(!navigator.onLine||location.protocol==='file:')return null;
   const key=norm(g.title);
-  try{
-    const url='https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles='+encodeURIComponent(g.title)+'&prop=pageimages&piprop=thumbnail%7Coriginal&pithumbsize=640&format=json&origin=*';
-    const r=await fetch(url,{headers:{Accept:'application/json'}});
-    if(!r.ok)return null;
-    const d=await r.json();
-    const pages=Object.values((d.query&&d.query.pages)||{});
-    const page=pages.find(p=>p&&p.missing===undefined&&imageFromWikiPage(p));
-    const image=imageFromWikiPage(page);
-    return image?rememberCover(key,image):null
-  }catch(e){return null}
+  const d=await fetchJsonFast('https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles='+encodeURIComponent(g.title)+'&prop=pageimages&piprop=thumbnail%7Coriginal&pithumbsize=640&format=json&origin=*');
+  if(!d)return null;
+  const pages=Object.values((d.query&&d.query.pages)||{});
+  const page=pages.find(p=>p&&p.missing===undefined&&imageFromWikiPage(p));
+  const image=imageFromWikiPage(page);
+  return image?rememberCover(key,image):null
 }
 async function wikiCover(g){
   if(!navigator.onLine||location.protocol==='file:')return null;
   const key=norm(g.title);
-  if(coverCache.has(key)&&coverCache.get(key))return coverCache.get(key);
-  try{
-    const query=encodeURIComponent(g.title);
-    const url='https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='+query+'&gsrnamespace=0&gsrlimit=12&prop=pageimages&piprop=thumbnail%7Coriginal&pithumbsize=640&format=json&origin=*';
-    const r=await fetch(url,{headers:{Accept:'application/json'}});
-    if(!r.ok)return null;
-    const d=await r.json();
-    const pages=Object.values((d.query&&d.query.pages)||{});
-    const target=norm(g.title);
-    pages.sort((a,b)=>titleImageScore(b.title,target)-titleImageScore(a.title,target));
-    const best=pages.find(p=>imageFromWikiPage(p)&&titleImageScore(p.title,target)>=35);
-    const image=imageFromWikiPage(best);
-    return image?rememberCover(key,image):null
-  }catch(e){return null}
+  const query=encodeURIComponent(g.title);
+  const d=await fetchJsonFast('https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='+query+'&gsrnamespace=0&gsrlimit=12&prop=pageimages&piprop=thumbnail%7Coriginal&pithumbsize=640&format=json&origin=*');
+  if(!d)return null;
+  const pages=Object.values((d.query&&d.query.pages)||{});
+  const target=norm(g.title);
+  pages.sort((a,b)=>titleImageScore(b.title,target)-titleImageScore(a.title,target));
+  const best=pages.find(p=>imageFromWikiPage(p)&&titleImageScore(p.title,target)>=35);
+  const image=imageFromWikiPage(best);
+  return image?rememberCover(key,image):null
 }
 async function commonsCover(g){
   if(!navigator.onLine||location.protocol==='file:')return null;
   const key=norm(g.title);
-  try{
-    const q=encodeURIComponent(g.title+' video game cover');
-    const url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+q+'&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json&origin=*';
-    const r=await fetch(url,{headers:{Accept:'application/json'}});
-    if(!r.ok)return null;
-    const d=await r.json();
-    const pages=Object.values((d.query&&d.query.pages)||{});
-    pages.sort((a,b)=>titleImageScore(b.title.replace(/^File:/i,'').replace(/\\.[^.]+$/,''),g.title)-titleImageScore(a.title.replace(/^File:/i,'').replace(/\\.[^.]+$/,''),g.title));
-    const best=pages.find(p=>p.imageinfo&&p.imageinfo[0]&&titleImageScore(p.title.replace(/^File:/i,'').replace(/\\.[^.]+$/,''),g.title)>=48);
-    const image=best&&best.imageinfo&&best.imageinfo[0]&&(best.imageinfo[0].thumburl||best.imageinfo[0].url);
-    return image?rememberCover(key,image):null
-  }catch(e){return null}
+  const q=encodeURIComponent(g.title+' video game cover');
+  const d=await fetchJsonFast('https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+q+'&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json&origin=*');
+  if(!d)return null;
+  const pages=Object.values((d.query&&d.query.pages)||{});
+  const fileTitle=p=>(p.title||'').replace(/^File:/i,'');
+  const fileStem=p=>{const t=fileTitle(p);const dot=t.lastIndexOf('.');return dot>0?t.slice(0,dot):t};
+  pages.sort((a,b)=>titleImageScore(fileStem(b),g.title)-titleImageScore(fileStem(a),g.title));
+  const best=pages.find(p=>p.imageinfo&&p.imageinfo[0]&&titleImageScore(fileStem(p),g.title)>=48);
+  const image=best&&best.imageinfo&&best.imageinfo[0]&&(best.imageinfo[0].thumburl||best.imageinfo[0].url);
+  return image?rememberCover(key,image):null
 }
 async function wikidataCover(g){
   if(!navigator.onLine||location.protocol==='file:')return null;
   const key=norm(g.title);
-  try{
-    const q='https://www.wikidata.org/w/api.php?action=wbsearchentities&search='+encodeURIComponent(g.title)+'&language=en&uselang=en&type=item&limit=8&format=json&origin=*';
-    const sr=await fetch(q,{headers:{Accept:'application/json'}});
-    if(!sr.ok)return null;
-    const sd=await sr.json();
-    const entities=sd.search||[];
-    let item=entities.find(e=>norm(e.label)===key);
-    if(!item)item=entities.find(e=>titleImageScore(e.label,g.title)>=85&&/video game|game|software/i.test(String(e.description||'')));
-    if(!item||!item.id)return null;
-    const er=await fetch('https://www.wikidata.org/w/api.php?action=wbgetentities&ids='+encodeURIComponent(item.id)+'&props=claims&format=json&origin=*',{headers:{Accept:'application/json'}});
-    if(!er.ok)return null;
-    const ed=await er.json();
-    const claims=ed.entities&&ed.entities[item.id]&&ed.entities[item.id].claims;
-    const file=claims&&claims.P18&&claims.P18[0]&&claims.P18[0].mainsnak&&claims.P18[0].mainsnak.datavalue&&claims.P18[0].mainsnak.datavalue.value;
-    if(!file)return null;
-    return rememberCover(key,'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(file)+'?width=640')
-  }catch(e){return null}
+  const sd=await fetchJsonFast('https://www.wikidata.org/w/api.php?action=wbsearchentities&search='+encodeURIComponent(g.title)+'&language=en&uselang=en&type=item&limit=8&format=json&origin=*');
+  const entities=sd&&sd.search||[];
+  let item=entities.find(e=>norm(e.label)===key);
+  if(!item)item=entities.find(e=>titleImageScore(e.label,g.title)>=85&&/video game|game|software/i.test(String(e.description||'')));
+  if(!item||!item.id)return null;
+  const ed=await fetchJsonFast('https://www.wikidata.org/w/api.php?action=wbgetentities&ids='+encodeURIComponent(item.id)+'&props=claims&format=json&origin=*');
+  const claims=ed&&ed.entities&&ed.entities[item.id]&&ed.entities[item.id].claims;
+  const file=claims&&claims.P18&&claims.P18[0]&&claims.P18[0].mainsnak&&claims.P18[0].mainsnak.datavalue&&claims.P18[0].mainsnak.datavalue.value;
+  if(!file)return null;
+  return rememberCover(key,'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(file)+'?width=640')
 }
 function candidates(g){
   let u=[];
@@ -299,16 +300,14 @@ function setImage(img,urls,step=0,onExhausted=null){
     return
   }
   img.onerror=()=>{
-    if(step===0&&urls[step]){
-      const g=byOrder(img.dataset.order);
-      if(g&&coverCache.get(norm(g.title))===urls[step]){
-        coverCache.delete(norm(g.title));
-        try{const saved=JSON.parse(localStorage.getItem('savepoint-cover-cache-v1')||'{}');delete saved[norm(g.title)];localStorage.setItem('savepoint-cover-cache-v1',JSON.stringify(saved))}catch(e){}
-      }
+    const g=byOrder(img.dataset.order);
+    if(g&&urls[step]&&coverCache.get(norm(g.title))===urls[step]){
+      coverCache.delete(norm(g.title));
+      try{const saved=JSON.parse(localStorage.getItem('savepoint-cover-cache-v2')||'{}');delete saved[norm(g.title)];localStorage.setItem('savepoint-cover-cache-v2',JSON.stringify(saved))}catch(e){}
     }
     setImage(img,urls,step+1,onExhausted)
   };
-  img.onload=()=>img.classList.add('loaded');
+  img.onload=()=>{img.classList.add('loaded');img.dataset.loading=''};
   img.style.display='block';
   img.src=urls[step]
 }
@@ -318,30 +317,38 @@ async function loadArt(img){
   const g=byOrder(img.dataset.order);
   if(!g){img.dataset.loading='';return}
   const hide=()=>{img.classList.remove('loaded');img.style.display='none';img.dataset.loading=''};
-  const sources=[
-    async()=>{
-      if(STEAM[g.title])return null;
-      const id=await queueCoverRequest(()=>resolveSteam(g));
-      if(!id)return null;
-      const tried=new Set(candidates(g));
-      return steamImageUrls(id).filter(u=>!tried.has(u))
-    },
-    ()=>queueCoverRequest(()=>wikiDirectCover(g)),
-    ()=>queueCoverRequest(()=>wikiCover(g)),
-    ()=>queueCoverRequest(()=>commonsCover(g)),
-    ()=>queueCoverRequest(()=>wikidataCover(g))
-  ];
-  const nextSource=async(index)=>{
-    for(let i=index;i<sources.length;i++){
-      let result=null;
-      try{result=await sources[i]()}catch(e){}
-      if(!result)continue;
-      const urls=[...new Set((Array.isArray(result)?result:[result]).filter(u=>typeof u==='string'&&(u.startsWith('https://')||u.startsWith('http://'))))];
-      if(urls.length){setImage(img,urls,0,()=>nextSource(i+1));return}
-    }
+  const showCandidates=(urls,onFailure)=>{
+    const known=new Set(candidates(g));
+    const fresh=[...new Set(urls.filter(u=>typeof u==='string'&&(u.startsWith('https://')||u.startsWith('http://'))&&!known.has(u)))];
+    if(fresh.length){setImage(img,fresh,0,onFailure);return true}
+    return false
+  };
+  const extraSources=async()=>{
+    let results=[];
+    try{
+      results=await queueCoverRequest(()=>Promise.all([wikiDirectCover(g),wikiCover(g),commonsCover(g)]))
+    }catch(e){}
+    if(showCandidates(results.filter(Boolean),()=>lastSource()))return;
+    try{
+      const w=await queueCoverRequest(()=>wikidataCover(g));
+      if(showCandidates(w?[w]:[],hide))return
+    }catch(e){}
     hide()
   };
-  setImage(img,candidates(g),0,()=>nextSource(0))
+  const lastSource=async()=>{
+    let results=[];
+    try{
+      results=await queueCoverRequest(async()=>{
+        const tasks=[wikiSummaryCover(g)];
+        if(!STEAM[g.title])tasks.push(resolveSteam(g).then(id=>id?steamImageUrls(id):[]));
+        const settled=await Promise.all(tasks);
+        return settled.flat().filter(Boolean)
+      })
+    }catch(e){}
+    if(showCandidates(results,extraSources))return;
+    await extraSources()
+  };
+  setImage(img,candidates(g),0,lastSource)
 }
 const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){observer.unobserve(e.target);loadArt(e.target)}}),{rootMargin:'180px'});
 function watch(root=document){root.querySelectorAll('img[data-order]').forEach(i=>{if(!i.dataset.seen){i.dataset.seen='1';observer.observe(i)}})}
