@@ -197,7 +197,91 @@ async function resolveSteam(g){
   searching.set(g.title,task);
   try{return await task}finally{searching.delete(g.title)}
 }
-async function wikiCover(g){if(!navigator.onLine||location.protocol==='file:')return null;const key=norm(g.title);if(coverCache.has(key))return coverCache.get(key);try{const query=encodeURIComponent(g.title);const url='https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='+query+'&gsrnamespace=0&gsrlimit=8&prop=pageimages&piprop=thumbnail%7Coriginal&pithumbsize=640&format=json&origin=*';const r=await fetch(url,{headers:{Accept:'application/json'}});if(!r.ok)return null;const d=await r.json();const pages=Object.values((d.query&&d.query.pages)||{});const target=norm(g.title);const score=function(p){const t=norm(p.title);if(t===target)return 100;if(t.startsWith(target)||target.startsWith(t))return 75;const a=new Set(target.split(' '));const b=new Set(t.split(' '));let hit=0;a.forEach(w=>{if(w.length>2&&b.has(w))hit++});return a.size?hit/a.size*50:0};pages.sort((a,b)=>score(b)-score(a));const best=pages.find(p=>(p.thumbnail&&p.thumbnail.source)||(p.original&&p.original.source));if(!best||score(best)<35)return null;const image=(best.thumbnail&&best.thumbnail.source)||(best.original&&best.original.source);if(image){coverCache.set(key,image);try{const saved=JSON.parse(localStorage.getItem('savepoint-cover-cache-v1')||'{}');saved[key]=image;localStorage.setItem('savepoint-cover-cache-v1',JSON.stringify(saved))}catch(e){}}return image}catch(e){return null}}
+function rememberCover(key,image){
+  if(typeof image!=='string'||!(image.startsWith('https://')||image.startsWith('http://')))return null;
+  coverCache.set(key,image);
+  try{const saved=JSON.parse(localStorage.getItem('savepoint-cover-cache-v1')||'{}');saved[key]=image;localStorage.setItem('savepoint-cover-cache-v1',JSON.stringify(saved))}catch(e){}
+  return image
+}
+function imageFromWikiPage(p){return (p&&p.thumbnail&&p.thumbnail.source)||(p&&p.original&&p.original.source)||null}
+function titleImageScore(candidate,target){
+  const a=norm(candidate),b=norm(target);
+  if(!a||!b)return 0;
+  if(a===b)return 100;
+  if(a.includes(b)||b.includes(a))return 85;
+  const aa=new Set(a.split(' ').filter(w=>w.length>2)),bb=new Set(b.split(' ').filter(w=>w.length>2));
+  let hit=0;aa.forEach(w=>{if(bb.has(w))hit++});
+  return aa.size?Math.round(hit/aa.size*70):0
+}
+async function wikiDirectCover(g){
+  if(!navigator.onLine||location.protocol==='file:')return null;
+  const key=norm(g.title);
+  try{
+    const url='https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles='+encodeURIComponent(g.title)+'&prop=pageimages&piprop=thumbnail%7Coriginal&pithumbsize=640&format=json&origin=*';
+    const r=await fetch(url,{headers:{Accept:'application/json'}});
+    if(!r.ok)return null;
+    const d=await r.json();
+    const pages=Object.values((d.query&&d.query.pages)||{});
+    const page=pages.find(p=>p&&p.missing===undefined&&imageFromWikiPage(p));
+    const image=imageFromWikiPage(page);
+    return image?rememberCover(key,image):null
+  }catch(e){return null}
+}
+async function wikiCover(g){
+  if(!navigator.onLine||location.protocol==='file:')return null;
+  const key=norm(g.title);
+  if(coverCache.has(key)&&coverCache.get(key))return coverCache.get(key);
+  try{
+    const query=encodeURIComponent(g.title);
+    const url='https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='+query+'&gsrnamespace=0&gsrlimit=12&prop=pageimages&piprop=thumbnail%7Coriginal&pithumbsize=640&format=json&origin=*';
+    const r=await fetch(url,{headers:{Accept:'application/json'}});
+    if(!r.ok)return null;
+    const d=await r.json();
+    const pages=Object.values((d.query&&d.query.pages)||{});
+    const target=norm(g.title);
+    pages.sort((a,b)=>titleImageScore(b.title,target)-titleImageScore(a.title,target));
+    const best=pages.find(p=>imageFromWikiPage(p)&&titleImageScore(p.title,target)>=35);
+    const image=imageFromWikiPage(best);
+    return image?rememberCover(key,image):null
+  }catch(e){return null}
+}
+async function commonsCover(g){
+  if(!navigator.onLine||location.protocol==='file:')return null;
+  const key=norm(g.title);
+  try{
+    const q=encodeURIComponent(g.title+' video game cover');
+    const url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+q+'&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json&origin=*';
+    const r=await fetch(url,{headers:{Accept:'application/json'}});
+    if(!r.ok)return null;
+    const d=await r.json();
+    const pages=Object.values((d.query&&d.query.pages)||{});
+    pages.sort((a,b)=>titleImageScore(b.title.replace(/^File:/i,'').replace(/\\.[^.]+$/,''),g.title)-titleImageScore(a.title.replace(/^File:/i,'').replace(/\\.[^.]+$/,''),g.title));
+    const best=pages.find(p=>p.imageinfo&&p.imageinfo[0]&&titleImageScore(p.title.replace(/^File:/i,'').replace(/\\.[^.]+$/,''),g.title)>=48);
+    const image=best&&best.imageinfo&&best.imageinfo[0]&&(best.imageinfo[0].thumburl||best.imageinfo[0].url);
+    return image?rememberCover(key,image):null
+  }catch(e){return null}
+}
+async function wikidataCover(g){
+  if(!navigator.onLine||location.protocol==='file:')return null;
+  const key=norm(g.title);
+  try{
+    const q='https://www.wikidata.org/w/api.php?action=wbsearchentities&search='+encodeURIComponent(g.title)+'&language=en&uselang=en&type=item&limit=8&format=json&origin=*';
+    const sr=await fetch(q,{headers:{Accept:'application/json'}});
+    if(!sr.ok)return null;
+    const sd=await sr.json();
+    const entities=sd.search||[];
+    let item=entities.find(e=>norm(e.label)===key);
+    if(!item)item=entities.find(e=>titleImageScore(e.label,g.title)>=85&&/video game|game|software/i.test(String(e.description||'')));
+    if(!item||!item.id)return null;
+    const er=await fetch('https://www.wikidata.org/w/api.php?action=wbgetentities&ids='+encodeURIComponent(item.id)+'&props=claims&format=json&origin=*',{headers:{Accept:'application/json'}});
+    if(!er.ok)return null;
+    const ed=await er.json();
+    const claims=ed.entities&&ed.entities[item.id]&&ed.entities[item.id].claims;
+    const file=claims&&claims.P18&&claims.P18[0]&&claims.P18[0].mainsnak&&claims.P18[0].mainsnak.datavalue&&claims.P18[0].mainsnak.datavalue.value;
+    if(!file)return null;
+    return rememberCover(key,'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(file)+'?width=640')
+  }catch(e){return null}
+}
 function candidates(g){
   let u=[];
   const key=norm(g.title);
@@ -234,29 +318,30 @@ async function loadArt(img){
   const g=byOrder(img.dataset.order);
   if(!g){img.dataset.loading='';return}
   const hide=()=>{img.classList.remove('loaded');img.style.display='none';img.dataset.loading=''};
-  const wikiFallback=async()=>{
-    if(!navigator.onLine||location.protocol==='file:'){hide();return}
-    try{
-      const w=await queueCoverRequest(()=>wikiCover(g));
-      if(w){setImage(img,[w],0,hide);return}
-    }catch(e){}
+  const sources=[
+    async()=>{
+      if(STEAM[g.title])return null;
+      const id=await queueCoverRequest(()=>resolveSteam(g));
+      if(!id)return null;
+      const tried=new Set(candidates(g));
+      return steamImageUrls(id).filter(u=>!tried.has(u))
+    },
+    ()=>queueCoverRequest(()=>wikiDirectCover(g)),
+    ()=>queueCoverRequest(()=>wikiCover(g)),
+    ()=>queueCoverRequest(()=>commonsCover(g)),
+    ()=>queueCoverRequest(()=>wikidataCover(g))
+  ];
+  const nextSource=async(index)=>{
+    for(let i=index;i<sources.length;i++){
+      let result=null;
+      try{result=await sources[i]()}catch(e){}
+      if(!result)continue;
+      const urls=[...new Set((Array.isArray(result)?result:[result]).filter(u=>typeof u==='string'&&(u.startsWith('https://')||u.startsWith('http://'))))];
+      if(urls.length){setImage(img,urls,0,()=>nextSource(i+1));return}
+    }
     hide()
   };
-  const lastFallback=async()=>{
-    if(!navigator.onLine||location.protocol==='file:'){hide();return}
-    if(!STEAM[g.title]){
-      try{
-        const id=await queueCoverRequest(()=>resolveSteam(g));
-        if(id){
-          const tried=new Set(candidates(g));
-          const remaining=steamImageUrls(id).filter(u=>!tried.has(u));
-          if(remaining.length){setImage(img,remaining,0,wikiFallback);return}
-        }
-      }catch(e){}
-    }
-    await wikiFallback()
-  };
-  setImage(img,candidates(g),0,lastFallback)
+  setImage(img,candidates(g),0,()=>nextSource(0))
 }
 const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){observer.unobserve(e.target);loadArt(e.target)}}),{rootMargin:'180px'});
 function watch(root=document){root.querySelectorAll('img[data-order]').forEach(i=>{if(!i.dataset.seen){i.dataset.seen='1';observer.observe(i)}})}
