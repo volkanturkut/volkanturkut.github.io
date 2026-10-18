@@ -324,19 +324,21 @@ async function loadArt(img){
     if(fresh.length){setImage(img,fresh,0,onFailure);return true}
     return false
   };
+  const wikidataSource=async()=>{
+    let w=null;
+    try{w=await queueCoverRequest(()=>wikidataCover(g))}catch(e){}
+    if(showCandidates(w?[w]:[],hide))return;
+    hide()
+  };
   const extraSources=async()=>{
     let results=[];
     try{
       results=await queueCoverRequest(()=>Promise.all([wikiDirectCover(g),wikiCover(g),commonsCover(g)]))
     }catch(e){}
-    if(showCandidates(results.filter(Boolean),()=>lastSource()))return;
-    try{
-      const w=await queueCoverRequest(()=>wikidataCover(g));
-      if(showCandidates(w?[w]:[],hide))return
-    }catch(e){}
-    hide()
+    if(showCandidates(results.filter(Boolean),wikidataSource))return;
+    await wikidataSource()
   };
-  const lastSource=async()=>{
+  const primarySources=async()=>{
     let results=[];
     try{
       results=await queueCoverRequest(async()=>{
@@ -349,7 +351,7 @@ async function loadArt(img){
     if(showCandidates(results,extraSources))return;
     await extraSources()
   };
-  setImage(img,candidates(g),0,lastSource)
+  setImage(img,candidates(g),0,primarySources)
 }
 const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){observer.unobserve(e.target);loadArt(e.target)}}),{rootMargin:'180px'});
 function watch(root=document){root.querySelectorAll('img[data-order]').forEach(i=>{if(!i.dataset.seen){i.dataset.seen='1';observer.observe(i)}})}
