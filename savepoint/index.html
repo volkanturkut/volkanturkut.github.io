@@ -317,9 +317,10 @@ async function loadArt(img){
   const g=byOrder(img.dataset.order);
   if(!g){img.dataset.loading='';return}
   const hide=()=>{img.classList.remove('loaded');img.style.display='none';img.dataset.loading=''};
+  const tried=new Set(candidates(g));
   const showCandidates=(urls,onFailure)=>{
-    const known=new Set(candidates(g));
-    const fresh=[...new Set(urls.filter(u=>typeof u==='string'&&(u.startsWith('https://')||u.startsWith('http://'))&&!known.has(u)))];
+    const fresh=[...new Set(urls.filter(u=>typeof u==='string'&&(u.startsWith('https://')||u.startsWith('http://'))&&!tried.has(u)))];
+    fresh.forEach(u=>tried.add(u));
     if(fresh.length){setImage(img,fresh,0,onFailure);return true}
     return false
   };
