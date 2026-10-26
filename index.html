@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="Entangled — a generative sphere by Volkan Turkut.">
+  <title>Entangled — Volkan Turkut</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <style>
+    :root{color-scheme:dark;--bg:#050505;--fg:#ecece8;--muted:#858681}
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0}
+    body{overflow:hidden;background:var(--bg);color:var(--fg);font-family:Inter,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+    .stage{position:relative;width:100%;height:100vh;height:100svh;min-height:420px;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 46%,rgba(130,132,128,.08),transparent 56%),var(--bg)}
+    .stage:before{position:absolute;inset:0;content:"";pointer-events:none;opacity:.12;z-index:2;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");mix-blend-mode:soft-light}
+    .eyebrow,.index{position:absolute;z-index:3;top:clamp(22px,4vh,42px);margin:0;font-size:10px;font-weight:500;line-height:1;letter-spacing:.2em;text-transform:uppercase}
+    .eyebrow{left:clamp(22px,4vw,48px);color:rgba(236,236,232,.8)}
+    .index{right:clamp(22px,4vw,48px);color:var(--muted);letter-spacing:.12em;font-variant-numeric:tabular-nums}
+    #orb{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1}
+    .footer{position:absolute;z-index:4;inset-inline:0;bottom:clamp(24px,4.6vh,46px);display:flex;flex-direction:column;align-items:center;gap:13px;padding-inline:20px;text-align:center}
+    .creator{margin:0;color:rgba(236,236,232,.9);font-size:10px;font-weight:500;letter-spacing:.18em;line-height:1.4;text-transform:uppercase}
+    .links{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px 21px;margin:0;padding:0;list-style:none}
+    .links a{color:var(--muted);font-size:11px;letter-spacing:.015em;text-decoration:none;transition:color 180ms ease;outline-offset:5px}
+    .links a:hover,.links a:focus-visible{color:var(--fg)}
+    .links a:focus-visible{outline:1px solid rgba(236,236,232,.6)}
+    @media(max-width:560px){.eyebrow{left:20px}.index{right:20px}.footer{bottom:max(22px,env(safe-area-inset-bottom));gap:12px}.links{gap:10px 17px}.links a{font-size:10px}}
+    @media(prefers-reduced-motion:reduce){.links a{transition:none}}
+  </style>
+</head>
+<body>
+  <main class="stage" aria-label="Entangled generative artwork">
+    <p class="eyebrow">Entangled</p>
+    <span class="index" aria-hidden="true">01 / 01</span>
+    <canvas id="orb" aria-hidden="true"></canvas>
+    <footer class="footer">
+      <p class="creator">Volkan Turkut</p>
+      <nav aria-label="Social links">
+        <ul class="links">
+          <li><a href="https://volkanturkut.artstation.com/" target="_blank" rel="noopener noreferrer">ArtStation</a></li>
+          <li><a href="https://volkanturkut.itch.io/" target="_blank" rel="noopener noreferrer">itch.io</a></li>
+          <li><a href="https://github.com/volkanturkut" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+      </nav>
+    </footer>
+  </main>
+  <script>
+    (() => {
+      "use strict";
+      const canvas = document.getElementById("orb");
+      const ctx = canvas.getContext("2d", {alpha:true});
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const TAU = Math.PI * 2;
+      const count = Math.min(2100, Math.max(1250, Math.floor(innerWidth * innerHeight / 650)));
+      let width = 0, height = 0, ratio = 1, radius = 300, points = [], edges = [];
+      let pointerX = 0, pointerY = 0, smoothX = 0, smoothY = 0, last = 0;
+
+      function createSphere() {
+        points = [];
+        edges = [];
+        const golden = Math.PI * (3 - Math.sqrt(5));
+        for (let i = 0; i < count; i++) {
+          const y = 1 - i / (count - 1) * 2;
+          const ring = Math.sqrt(Math.max(0, 1 - y * y));
+          const a = golden * i;
+          const ripple = 1 + .038 * Math.sin(a * 2.6 + y * 12) + .022 * Math.cos(a * 5 - y * 7);
+          points.push({x:Math.cos(a)*ring*ripple,y:y*ripple,z:Math.sin(a)*ring*ripple,seed:(i*.61803398875)%1,phase:a*1.7+y*9});
+        }
+        for (let i = 0; i < count; i++) {
+          const a = points[i];
+          for (let j = i + 1; j < Math.min(count, i + 18); j++) {
+            const b = points[j], dx = a.x-b.x, dy = a.y-b.y, dz = a.z-b.z;
+            const d2 = dx*dx + dy*dy + dz*dz;
+            if (d2 < .027 && d2 > .00005 && (i+j)%3 !== 0) edges.push([i,j,d2]);
+          }
+        }
+      }
+
+      function resize() {
+        width = innerWidth; height = innerHeight;
+        ratio = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(width * ratio);
+        canvas.height = Math.floor(height * ratio);
+        ctx.setTransform(ratio,0,0,ratio,0,0);
+        radius = Math.min(width*.39,height*.36,390);
+        createSphere();
+        draw(0, true);
+      }
+
+      function project(p, sy, cy, sx, cx, sz, cz, mx, my, r, t) {
+        const wave = 1 + .018*Math.sin(p.phase+t*.32) + .01*Math.cos(p.phase*1.7-t*.2);
+        const x=p.x*wave, y=p.y*wave, z=p.z*wave;
+        const x1=x*cy+z*sy, z1=-x*sy+z*cy;
+        const y2=y*cx-z1*sx, z2=y*sx+z1*cx;
+        const x3=x1*cz-y2*sz, y3=x1*sz+y2*cz;
+        const depth=3.2/(3.2-z2*.72);
+        return {x:mx+x3*r*depth,y:my+y3*r*depth,z:z2,depth:depth,seed:p.seed};
+      }
+
+      function draw(time, staticFrame) {
+        if (!staticFrame && reducedMotion) return;
+        const t = time * .001;
+        const dt = last ? Math.min(.05,(time-last)*.001) : .016;
+        last = time;
+        if (!reducedMotion) {
+          smoothX += (pointerX-smoothX)*Math.min(1,dt*1.8);
+          smoothY += (pointerY-smoothY)*Math.min(1,dt*1.8);
+        }
+        ctx.clearRect(0,0,width,height);
+        const mx=width*.5, my=height*.465, r=radius;
+        const halo=ctx.createRadialGradient(mx,my,r*.08,mx,my,r*1.32);
+        halo.addColorStop(0,"rgba(180,184,178,.065)");
+        halo.addColorStop(.62,"rgba(100,104,100,.022)");
+        halo.addColorStop(1,"rgba(0,0,0,0)");
+        ctx.fillStyle=halo;ctx.beginPath();ctx.arc(mx,my,r*1.32,0,TAU);ctx.fill();
+
+        const ry=(reducedMotion?0:t*.12)+smoothX*.32;
+        const rx=.16+smoothY*.2;
+        const rz=-.12;
+        const projected=points.map(p=>project(p,Math.sin(ry),Math.cos(ry),Math.sin(rx),Math.cos(rx),Math.sin(rz),Math.cos(rz),mx,my,r,t));
+        for (let e=0;e<edges.length;e++) {
+          const edge=edges[e], a=projected[edge[0]], b=projected[edge[1]];
+          const depth=(a.z+b.z)*.5;
+          const alpha=Math.max(0,(depth+.85)/1.85)*.16*(1-edge[2]/.03);
+          if(alpha<=.003)continue;
+          ctx.strokeStyle="rgba(210,214,207,"+alpha+")";
+          ctx.lineWidth=.42;
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        }
+        const sorted=projected.slice().sort((a,b)=>a.z-b.z);
+        for (let i=0;i<sorted.length;i++) {
+          const p=sorted[i];
+          const front=Math.max(0,(p.z+.35)/1.35);
+          const size=.35+(p.seed*.82);
+          ctx.fillStyle="rgba(238,239,232,"+(.14+front*.72)+")";
+          ctx.beginPath();ctx.arc(p.x,p.y,size*p.depth,0,TAU);ctx.fill();
+        }
+        if (!staticFrame && !reducedMotion) requestAnimationFrame(draw);
+      }
+
+      canvas.addEventListener("pointermove",e=>{
+        pointerX=(e.clientX/width-.5)*2;
+        pointerY=(e.clientY/height-.5)*2;
+      },{passive:true});
+      canvas.addEventListener("pointerleave",()=>{pointerX=0;pointerY=0;},{passive:true});
+      window.addEventListener("resize",resize,{passive:true});
+      resize();
+      if (!reducedMotion) requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>
