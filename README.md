@@ -1,12 +1,13 @@
 # Volkan Turkut
 
-A minimal personal landing page with an animated generative particle sphere and links to ArtStation, itch.io, and GitHub.
+A minimal personal landing page with a GPU-updated, monochrome particle sphere and links to ArtStation, itch.io, and GitHub.
 
 ## Tech
 
-- Self-contained HTML, CSS, Canvas JavaScript, and SVG favicon
-- No build step, framework, external font, image, library, or paid asset
-- Responsive layout, subtle pointer interaction, and reduced-motion support
+- Self-contained HTML, CSS, WebGL2, and GLSL shaders
+- GPU particle state simulation with curl-field motion and fading trails
+- No framework, build step, external font, image, library, or paid asset
+- Transparent SVG favicon, responsive layout, and pointer interaction
 
 ## Free hosting with GitHub Pages
 
@@ -18,4 +19,4 @@ Open **Settings → Pages** in this repository. Under **Build and deployment**, 
 
 ## Customize
 
-Edit \`index.html\` to change the design or profile links. The sphere is rendered in the browser, and \`favicon.svg\` has a transparent background.
+Edit \`index.html\` to change the design or profile links. The particle artwork is rendered in the browser; no third-party assets or paid services are required.
