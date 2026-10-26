@@ -1,28 +1,30 @@
 # Volkan Turkut
 
-A minimal personal landing page with a full-screen, GPU-driven particle artwork and links to ArtStation, itch.io, and GitHub.
+A minimal, free-to-host personal landing page with an Entangled-inspired GPU particle simulation.
 
-## Rendering
+## Renderer
 
-- Self-contained HTML, CSS, WebGL2, and GLSL; no build step or runtime dependency
-- Up to 262,144 GPU-updated particles on desktop, with a smaller workload on narrow screens
-- Additive particle trails and curl-field motion for a fluid, filament-like cloud
-- Same-origin browser windows can discover one another locally and create a color-coded particle tether
-- Pointer interaction, reduced-motion support, a lightweight fallback, and a transparent SVG favicon
-- No external fonts, images, paid assets, or services
+- GPU-computed particle positions, velocity, and acceleration
+- Up to 1,048,576 particles on larger displays; a smaller workload on narrow or short screens
+- Green particle shell with a red core; paired browser windows share a screen-coordinate world and form a flowing particle tether
+- Additive blending and persistent trails, using locally hosted Three.js
+- Name and ArtStation → itch.io → GitHub links remain above the canvas
+- No paid service, bundler, runtime CDN, or external font required
 
-## Credits
+## Credits and licensing
 
-This is an independent implementation inspired by [Entangled by Bjørn Staal](https://www.nonfigurativ.com/projects/entangled) and the [alphardex recreation](https://github.com/alphardex/entangled). It does not include either project's source bundle.
+The renderer adapts the MIT-licensed GPU recreation from [fire17/entangled-grail](https://github.com/fire17/entangled-grail/tree/main/versions/v2-entangled-gpu) and uses Three.js. Third-party copyright and license notes are in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+
+This is a close recreation, not the original production bundle from Bjørn Staal's fxhash artwork.
 
 ## Free hosting with GitHub Pages
 
-This repository is named `volkanturkut.github.io`, so it can be published at:
+This repository is named `volkanturkut.github.io`, so the site URL is:
 
 **https://volkanturkut.github.io/**
 
-Open **Settings → Pages** in this repository. Under **Build and deployment**, select **Deploy from a branch**, choose **main** and **/(root)**, and save. GitHub Pages publishes the static site after deployment finishes.
+The current GitHub Pages workflow publishes the static files from this repository. No build step is needed.
 
 ## Customize
 
-Edit `index.html` to change the design or profile links. The artwork runs in visitors' browsers; no paid runtime or hosting service is required.
+Edit `index.html` to change the footer name or profile links. Particle simulation settings such as the resolution are in `main.js`.
