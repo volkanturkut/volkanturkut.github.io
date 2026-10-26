@@ -8,237 +8,112 @@
   <title>Volkan Turkut</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <style>
-    :root{color-scheme:dark;--bg:#000;--fg:#e8eae5;--muted:#888c87}
-    *{box-sizing:border-box}
-    html,body{width:100%;height:100%;margin:0}
-    body{overflow:hidden;background:var(--bg);color:var(--fg);font-family:Inter,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
-    .stage{position:relative;width:100%;height:100vh;height:100svh;min-height:420px;overflow:hidden;isolation:isolate;background:#000}
-    .stage:before{position:absolute;inset:0;content:"";pointer-events:none;z-index:2;opacity:.08;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");mix-blend-mode:soft-light}
-    #orb{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1}
-    .footer{position:absolute;z-index:4;inset-inline:0;bottom:clamp(25px,4.6vh,46px);display:flex;flex-direction:column;align-items:center;gap:13px;padding-inline:20px;text-align:center}
-    .creator{margin:0;color:rgba(236,238,232,.9);font-size:10px;font-weight:500;letter-spacing:.19em;line-height:1.4;text-transform:uppercase}
-    .links{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px 21px;margin:0;padding:0;list-style:none}
-    .links a{color:var(--muted);font-size:11px;letter-spacing:.015em;text-decoration:none;transition:color 180ms ease;outline-offset:5px}
-    .links a:hover,.links a:focus-visible{color:var(--fg)}
-    .links a:focus-visible{outline:1px solid rgba(236,238,232,.6)}
-    @media(max-width:560px){.footer{bottom:max(22px,env(safe-area-inset-bottom));gap:12px}.links{gap:10px 17px}.links a{font-size:10px}}
-    @media(prefers-reduced-motion:reduce){.links a{transition:none}}
-  </style>
+:root{color-scheme:dark;--bg:#000;--fg:#e8e9e6;--muted:#858681}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0}
+body{overflow:hidden;background:var(--bg);color:var(--fg);font-family:Inter,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+.stage{position:relative;width:100%;height:100vh;height:100svh;min-height:420px;overflow:hidden;background:#000;isolation:isolate}
+#orb{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1}
+.footer{position:absolute;z-index:4;inset-inline:0;bottom:clamp(25px,4.6vh,46px);display:flex;flex-direction:column;align-items:center;gap:13px;padding-inline:20px;text-align:center}
+.creator{margin:0;color:rgba(236,237,233,.9);font-size:10px;font-weight:500;letter-spacing:.19em;line-height:1.4;text-transform:uppercase}
+.links{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px 21px;margin:0;padding:0;list-style:none}
+.links a{color:var(--muted);font-size:11px;letter-spacing:.015em;text-decoration:none;transition:color 180ms ease;outline-offset:5px}
+.links a:hover,.links a:focus-visible{color:var(--fg)}
+.links a:focus-visible{outline:1px solid rgba(236,237,233,.6)}
+@media(max-width:560px){.footer{bottom:max(22px,env(safe-area-inset-bottom));gap:12px}.links{gap:10px 17px}.links a{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.links a{transition:none}}
+</style>
 </head>
 <body>
   <main class="stage" aria-label="Generative particle artwork">
-    <canvas id="orb" aria-hidden="true"></canvas>
-    <footer class="footer">
-      <p class="creator">Volkan Turkut</p>
-      <nav aria-label="Social links">
-        <ul class="links">
-          <li><a href="https://volkanturkut.artstation.com/" target="_blank" rel="noopener noreferrer">ArtStation</a></li>
-          <li><a href="https://volkanturkut.itch.io/" target="_blank" rel="noopener noreferrer">itch.io</a></li>
-          <li><a href="https://github.com/volkanturkut" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-        </ul>
-      </nav>
-    </footer>
-  </main>
-  <script>
-    (() => {
-      "use strict";
-      const canvas = document.getElementById("orb");
-      const ctx = canvas.getContext("2d", {alpha:true});
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const TAU = Math.PI * 2;
-      let width = 0, height = 0, ratio = 1, radius = 340;
-      let outer = [], core = [], last = 0, pointerX = 0, pointerY = 0;
-      let smoothX = 0, smoothY = 0;
+  <canvas id="orb" aria-hidden="true"></canvas>
+  <footer class="footer">
+    <p class="creator">Volkan Turkut</p>
+    <nav aria-label="Social links">
+      <ul class="links">
+        <li><a href="https://volkanturkut.artstation.com/" target="_blank" rel="noopener noreferrer">ArtStation</a></li>
+        <li><a href="https://volkanturkut.itch.io/" target="_blank" rel="noopener noreferrer">itch.io</a></li>
+        <li><a href="https://github.com/volkanturkut" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      </ul>
+    </nav>
+  </footer>
+</main>
+  <script>(() => {
+"use strict";
+const canvas=document.getElementById("orb"), reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let w=0,h=0,dpr=1,mx=0,my=0,raf=0;
+function fallback(){
+  const c2=document.createElement("canvas");c2.id="orb";c2.setAttribute("aria-hidden","true");canvas.replaceWith(c2);
+  const c=c2.getContext("2d");if(!c)return;
+  function draw(){
+    w=innerWidth;h=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);c2.width=w*dpr;c2.height=h*dpr;c.setTransform(dpr,0,0,dpr,0,0);
+    c.fillStyle="#000";c.fillRect(0,0,w,h);const r=Math.min(w*.43,h*.39),n=Math.min(9000,Math.max(2400,Math.floor(w*h/105)));
+    for(let i=0;i<n;i++){const y=Math.random()*2-1,a=Math.random()*Math.PI*2,s=Math.sqrt(1-y*y),u=Math.random(),shell=u<.68?.76+Math.random()*.24:u<.9?.49+Math.random()*.27:.11+Math.random()*.38;
+      c.fillStyle="rgba(225,228,223,"+(Math.random()*.18)+")";c.beginPath();c.arc(w*.5+Math.cos(a)*s*shell*r,h*.455+y*shell*r,.25+Math.random()*.7,0,Math.PI*2);c.fill();}
+  }draw();addEventListener("resize",draw,{passive:true});
+}
+const gl=canvas.getContext("webgl2",{alpha:false,antialias:true,powerPreference:"high-performance"});
+if(!gl||!gl.getExtension("EXT_color_buffer_float")){fallback();return;}
 
-      function direction() {
-        const y = Math.random() * 2 - 1;
-        const a = Math.random() * TAU;
-        const s = Math.sqrt(Math.max(0, 1-y*y));
-        return {x:Math.cos(a)*s,y:y,z:Math.sin(a)*s};
-      }
+const quadVS="#version 300 es\nin vec2 aPosition;out vec2 vUv;void main(){vUv=aPosition*.5+.5;gl_Position=vec4(aPosition,0.,1.);}";
+const copyFS="#version 300 es\nprecision highp float;in vec2 vUv;uniform sampler2D uTexture;uniform float uFade;out vec4 outColor;void main(){outColor=vec4(texture(uTexture,vUv).rgb*uFade,1.);}";
+const computeFS="#version 300 es\nprecision highp float;in vec2 vUv;uniform sampler2D uState;uniform float uTime;uniform float uDelta;out vec4 outColor;vec3 A(vec3 p,float t){return vec3(sin(p.y*1.71+p.z*.91+t*.11)+.38*cos(p.z*3.13-p.y*2.37-t*.07),sin(p.z*1.83+p.x*.79-t*.09)+.35*cos(p.x*3.47-p.z*2.41-t*.13),sin(p.x*1.67+p.y*.93+t*.12)+.37*cos(p.y*3.91-p.x*2.73+t*.17));}vec3 curl(vec3 p,float t){float e=.018;vec3 dx=(A(p+vec3(e,0,0),t)-A(p-vec3(e,0,0),t))/(2.*e);vec3 dy=(A(p+vec3(0,e,0),t)-A(p-vec3(0,e,0),t))/(2.*e);vec3 dz=(A(p+vec3(0,0,e),t)-A(p-vec3(0,0,e),t))/(2.*e);return vec3(dy.z-dz.y,dz.x-dx.z,dx.y-dy.x);}void main(){vec4 s=texture(uState,vUv);float r=s.a;vec3 d=normalize(s.xyz);vec3 v=curl(d*(2.1+r*2.6),uTime*.43);v-=d*dot(v,d);d=normalize(d+v*uDelta*(.12+.035*sin(uTime*.13+d.y*5.)));outColor=vec4(d*r,r);}";
+const particleVS="#version 300 es\nprecision highp float;in vec2 aUv;in float aSeed;uniform sampler2D uState;uniform vec2 uResolution;uniform vec2 uMouse;uniform float uTime;uniform float uPixelRatio;out float vAlpha;out vec3 vColor;void main(){vec4 s=texture(uState,aUv);vec3 p=s.xyz;float yaw=uTime*.052+uMouse.x*.19,pitch=.13+uMouse.y*.16,roll=-.075;float cy=cos(yaw),sy=sin(yaw);vec3 q=vec3(p.x*cy+p.z*sy,p.y,-p.x*sy+p.z*cy);float cp=cos(pitch),sp=sin(pitch);q=vec3(q.x,q.y*cp-q.z*sp,q.y*sp+q.z*cp);float cr=cos(roll),sr=sin(roll);q=vec3(q.x*cr-q.y*sr,q.x*sr+q.y*cr,q.z);float aspect=uResolution.y/max(1.,uResolution.x),z=q.z;gl_Position=vec4(q.x*.785*aspect,q.y*.785+.075,z*.18,1.);gl_PointSize=(.52+pow(aSeed,1.55)*1.8)*uPixelRatio*(.9+z*.16);float front=clamp(.54+z*.31,.16,.86);vAlpha=(.0035+pow(aSeed,3.5)*.058)*(.67+s.a*.33)*front;vColor=mix(vec3(.35,.36,.35),vec3(.94,.95,.92),pow(aSeed,1.7));}";
+const particleFS="#version 300 es\nprecision highp float;in float vAlpha;in vec3 vColor;out vec4 outColor;void main(){vec2 p=gl_PointCoord-.5;float a=vAlpha*exp(-dot(p,p)*22.);if(a<.001)discard;outColor=vec4(vColor*a,a);}";
 
-      function makeParticle(isCore) {
-        const d = direction();
-        const shell = Math.random();
-        const r = isCore
-          ? 0.025 + Math.pow(Math.random(), 0.68) * 0.29
-          : (shell < 0.72
-              ? 0.57 + Math.pow(Math.random(), 0.34) * 0.42
-              : 0.12 + Math.pow(Math.random(), 0.55) * 0.83);
-        return {
-          x:d.x,y:d.y,z:d.z,r0:r,
-          phase:Math.random()*TAU,
-          seed:Math.random(),
-          lum:Math.random(),
-          hue:Math.random(),
-          px:null,py:null
-        };
-      }
+function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(s));return null;}return s;}
+function program(vsSrc,fsSrc){const vs=shader(gl.VERTEX_SHADER,vsSrc),fs=shader(gl.FRAGMENT_SHADER,fsSrc);if(!vs||!fs)return null;const p=gl.createProgram();gl.attachShader(p,vs);gl.attachShader(p,fs);gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS)){console.error(gl.getProgramInfoLog(p));return null;}return p;}
+const copy=program(quadVS,copyFS),compute=program(quadVS,computeFS),particles=program(particleVS,particleFS);
+if(!copy||!compute||!particles){fallback();return;}
 
-      function createParticles() {
-        const area = width * height;
-        const count = Math.max(2600, Math.min(10500, Math.floor(area/125)));
-        outer = Array.from({length:count},() => makeParticle(false));
-        core = Array.from({length:Math.max(500,Math.floor(count*0.17))},() => makeParticle(true));
-      }
+const quad=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quad);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+function setQuad(p){const a=gl.getAttribLocation(p,"aPosition");gl.bindBuffer(gl.ARRAY_BUFFER,quad);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);}
+const size=Math.min(384,Math.max(192,Math.floor(Math.min(innerWidth,innerHeight)*.48))),count=size*size;
+const init=new Float32Array(count*4),uv=new Float32Array(count*2),seed=new Float32Array(count);
+for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const i=y*size+x,z=Math.random()*2-1,a=Math.random()*Math.PI*2,s=Math.sqrt(1-z*z),u=Math.random();
+  const r=u<.67?.77+Math.pow(Math.random(),.72)*.23:u<.88?.51+Math.random()*.26:u<.975?.25+Math.random()*.30:.065+Math.random()*.19;
+  init.set([Math.cos(a)*s*r,z*r,Math.sin(a)*s*r,r],i*4);uv.set([(x+.5)/size,(y+.5)/size],i*2);seed[i]=Math.random();
+}
+function target(data){
+  const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,size,size,0,gl.RGBA,gl.FLOAT,data||null);
+  const fb=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fb);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);gl.drawBuffers([gl.COLOR_ATTACHMENT0]);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error("Float particle target is incomplete");return {tex,fb};
+}
+function trailTarget(){
+  const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,canvas.width,canvas.height,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  const fb=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fb);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);gl.drawBuffers([gl.COLOR_ATTACHMENT0]);return {tex,fb};
+}
+let stateA=target(init),stateB=target(null),trailA=null,trailB=null;
+const uvBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,uvBuffer);gl.bufferData(gl.ARRAY_BUFFER,uv,gl.STATIC_DRAW);
+const seedBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,seedBuffer);gl.bufferData(gl.ARRAY_BUFFER,seed,gl.STATIC_DRAW);
+function texUniform(p,name,tex){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.uniform1i(gl.getUniformLocation(p,name),0);}
+function resize(){
+  w=innerWidth;h=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=Math.max(1,Math.floor(w*dpr));canvas.height=Math.max(1,Math.floor(h*dpr));
+  if(trailA){gl.deleteFramebuffer(trailA.fb);gl.deleteTexture(trailA.tex);gl.deleteFramebuffer(trailB.fb);gl.deleteTexture(trailB.tex);}
+  trailA=trailTarget();trailB=trailTarget();
+  for(const t of [trailA,trailB]){gl.bindFramebuffer(gl.FRAMEBUFFER,t.fb);gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);}
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+}
+function render(now){
+  if(!reduce)raf=requestAnimationFrame(render);
+  const time=reduce?0:now*.001,dt=reduce?0:Math.min(.028,Math.max(.001,(now-(render.last||now-16))*.001));render.last=now;
+  gl.disable(gl.BLEND);gl.bindFramebuffer(gl.FRAMEBUFFER,stateB.fb);gl.viewport(0,0,size,size);gl.useProgram(compute);texUniform(compute,"uState",stateA.tex);
+  gl.uniform1f(gl.getUniformLocation(compute,"uTime"),time);gl.uniform1f(gl.getUniformLocation(compute,"uDelta"),dt);setQuad(compute);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  const oldState=stateA;stateA=stateB;stateB=oldState;
 
-      function resize() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        ratio = Math.min(window.devicePixelRatio || 1, 1.5);
-        canvas.width = Math.floor(width * ratio);
-        canvas.height = Math.floor(height * ratio);
-        ctx.setTransform(ratio,0,0,ratio,0,0);
-        radius = Math.min(width*0.45,height*0.425,455);
-        last = 0;
-        createParticles();
-        ctx.clearRect(0,0,width,height);
-        draw(0,true);
-      }
+  gl.bindFramebuffer(gl.FRAMEBUFFER,trailB.fb);gl.viewport(0,0,canvas.width,canvas.height);gl.disable(gl.BLEND);gl.useProgram(copy);texUniform(copy,"uTexture",trailA.tex);gl.uniform1f(gl.getUniformLocation(copy,"uFade"),reduce?0:.968);setQuad(copy);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);gl.useProgram(particles);texUniform(particles,"uState",stateA.tex);
+  gl.uniform2f(gl.getUniformLocation(particles,"uResolution"),canvas.width,canvas.height);gl.uniform2f(gl.getUniformLocation(particles,"uMouse"),mx,my);gl.uniform1f(gl.getUniformLocation(particles,"uTime"),time);gl.uniform1f(gl.getUniformLocation(particles,"uPixelRatio"),dpr);
+  let a=gl.getAttribLocation(particles,"aUv");gl.bindBuffer(gl.ARRAY_BUFFER,uvBuffer);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);
+  a=gl.getAttribLocation(particles,"aSeed");gl.bindBuffer(gl.ARRAY_BUFFER,seedBuffer);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,1,gl.FLOAT,false,0,0);gl.drawArrays(gl.POINTS,0,count);gl.disable(gl.BLEND);
 
-      function field(p,t) {
-        const k = 3.15;
-        const x = p.x*k, y = p.y*k, z = p.z*k;
-        let vx = -Math.sin(y+t*0.17)-Math.cos(z+t*0.29);
-        let vy = -Math.sin(z-t*0.23)-Math.cos(x-t*0.19);
-        let vz = -Math.sin(x+t*0.21)-Math.cos(y+t*0.31);
-        const dot = vx*p.x+vy*p.y+vz*p.z;
-        vx -= dot*p.x; vy -= dot*p.y; vz -= dot*p.z;
-        const len = Math.hypot(vx,vy,vz)||1;
-        return {x:vx/len,y:vy/len,z:vz/len};
-      }
-
-      function advance(p,t,dt,rate) {
-        const f = field(p,t);
-        const step = dt*rate;
-        p.x += f.x*step;
-        p.y += f.y*step;
-        p.z += f.z*step;
-        const len = Math.hypot(p.x,p.y,p.z)||1;
-        p.x /= len;p.y /= len;p.z /= len;
-      }
-
-      function project(p,t,mx,my,rx,ry,rz,r) {
-        const wobble = 1 + 0.014*Math.sin(p.phase+t*0.55) + 0.009*Math.sin(p.phase*1.9-t*0.31);
-        const x=p.x*p.r0*wobble*r, y=p.y*p.r0*wobble*r, z=p.z*p.r0*wobble*r;
-        const cy=Math.cos(ry), sy=Math.sin(ry);
-        const cp=Math.cos(rx), sp=Math.sin(rx);
-        const cr=Math.cos(rz), sr=Math.sin(rz);
-        const x1=x*cy+z*sy, z1=-x*sy+z*cy;
-        const y1=y*cp-z1*sp, z2=y*sp+z1*cp;
-        const x2=x1*cr-y1*sr, y2=x1*sr+y1*cr;
-        const depth=1+z2/(r||1)*0.105;
-        return {x:mx+x2*depth,y:my+y2*depth,z:z2/r,depth:depth};
-      }
-
-      const greenLine = [
-        "rgba(15,145,48,0.14)",
-        "rgba(23,207,65,0.17)",
-        "rgba(63,255,111,0.20)",
-        "rgba(163,255,185,0.24)",
-        "rgba(230,255,237,0.34)"
-      ];
-      const redLine = [
-        "rgba(110,4,13,0.16)",
-        "rgba(208,10,25,0.19)",
-        "rgba(255,38,48,0.23)",
-        "rgba(255,124,117,0.27)",
-        "rgba(255,225,203,0.34)"
-      ];
-
-      function drawGroup(particles,bins,t,dt,mx,my,r,rx,ry,rz,isCore) {
-        for (let i=0;i<particles.length;i++) {
-          const p=particles[i];
-          if (!reducedMotion) advance(p,t,dt,isCore?0.075:0.095);
-          const q=project(p,t,mx,my,rx,ry,rz,r);
-          const bucket=Math.min(4,Math.floor(p.lum*5));
-          const oldX=p.px===null?q.x:p.px, oldY=p.py===null?q.y:p.py;
-          bins[bucket].push([oldX,oldY,q.x,q.y,q.depth,p.seed,p.hue]);
-          p.px=q.x;p.py=q.y;
-        }
-      }
-
-      function paintBins(bins,colors,isCore) {
-        for (let b=0;b<bins.length;b++) {
-          const line=bins[b];
-          if (!line.length) continue;
-          ctx.beginPath();
-          for (let i=0;i<line.length;i++) {
-            const p=line[i];
-            ctx.moveTo(p[0],p[1]);
-            ctx.lineTo(p[2],p[3]);
-          }
-          ctx.strokeStyle=colors[b];
-          ctx.lineWidth=isCore?(0.35+b*0.13):(0.3+b*0.105);
-          ctx.stroke();
-
-          if (b>=3) {
-            ctx.beginPath();
-            for (let i=0;i<line.length;i++) {
-              const p=line[i];
-              if (p[6] < 0.055 || (p[5] > 0.35 && b===3)) continue;
-              ctx.moveTo(p[2]+0.55*p[4],p[3]);
-              ctx.arc(p[2],p[3],(0.28+b*0.12)*p[4],0,TAU);
-            }
-            ctx.fillStyle=isCore
-              ?(b===4?"rgba(255,230,218,0.26)":"rgba(255,115,111,0.15)")
-              :(b===4?"rgba(226,255,236,0.2)":"rgba(135,255,164,0.1)");
-            ctx.fill();
-          }
-        }
-      }
-
-      function draw(time,staticFrame) {
-        const t = reducedMotion?0:time*0.001;
-        const dt = last ? Math.min(0.04,Math.max(0,(time-last)*0.001)) : 0.016;
-        last=time;
-        if (!reducedMotion) {
-          smoothX += (pointerX-smoothX)*Math.min(1,dt*1.25);
-          smoothY += (pointerY-smoothY)*Math.min(1,dt*1.25);
-        }
-
-        ctx.globalCompositeOperation="source-over";
-        ctx.fillStyle="rgba(0,0,0,0.19)";
-        ctx.fillRect(0,0,width,height);
-        const mx=width*0.5, my=height*0.455, r=radius;
-        const glow=ctx.createRadialGradient(mx,my,0,mx,my,r*1.08);
-        glow.addColorStop(0,"rgba(30,72,35,0.055)");
-        glow.addColorStop(0.45,"rgba(16,48,22,0.035)");
-        glow.addColorStop(1,"rgba(0,0,0,0)");
-        ctx.fillStyle=glow;
-        ctx.beginPath();ctx.arc(mx,my,r*1.08,0,TAU);ctx.fill();
-
-        const coreGlow=ctx.createRadialGradient(mx,my,r*0.015,mx,my,r*0.43);
-        coreGlow.addColorStop(0,"rgba(255,20,34,0.045)");
-        coreGlow.addColorStop(0.5,"rgba(220,8,22,0.025)");
-        coreGlow.addColorStop(1,"rgba(0,0,0,0)");
-        ctx.fillStyle=coreGlow;
-        ctx.beginPath();ctx.arc(mx,my,r*0.43,0,TAU);ctx.fill();
-
-        ctx.globalCompositeOperation="lighter";
-        const outerBins=[[],[],[],[],[]];
-        const coreBins=[[],[],[],[],[]];
-        const yaw=(reducedMotion?0:t*0.055)+smoothX*0.18;
-        const pitch=0.10+smoothY*0.16;
-        const roll=-0.08;
-        drawGroup(outer,outerBins,t,dt,mx,my,r, pitch,yaw,roll,false);
-        drawGroup(core,coreBins,t,dt,mx,my,r,pitch,yaw,roll,true);
-        paintBins(outerBins,greenLine,false);
-        paintBins(coreBins,redLine,true);
-        ctx.globalCompositeOperation="source-over";
-
-        if (!staticFrame && !reducedMotion) requestAnimationFrame(draw);
-      }
-
-      canvas.addEventListener("pointermove",e=>{
-        pointerX=(e.clientX/width-0.5)*2;
-        pointerY=(e.clientY/height-0.5)*2;
-      },{passive:true});
-      canvas.addEventListener("pointerleave",()=>{pointerX=0;pointerY=0;},{passive:true});
-      window.addEventListener("resize",resize,{passive:true});
-      resize();
-      if (!reducedMotion) requestAnimationFrame(draw);
-    })();
-  </script>
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);gl.useProgram(copy);texUniform(copy,"uTexture",trailB.tex);gl.uniform1f(gl.getUniformLocation(copy,"uFade"),1);setQuad(copy);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  const t=trailA;trailA=trailB;trailB=t;
+}
+canvas.addEventListener("pointermove",e=>{mx=(e.clientX/w-.5)*2;my=(e.clientY/h-.5)*2;},{passive:true});
+canvas.addEventListener("pointerleave",()=>{mx=0;my=0;},{passive:true});
+addEventListener("resize",resize,{passive:true});addEventListener("pagehide",()=>{if(raf)cancelAnimationFrame(raf);},{once:true});
+try{resize();render(0);}catch(e){console.error("Particle renderer fallback",e);fallback();}
+})();</script>
 </body>
 </html>
