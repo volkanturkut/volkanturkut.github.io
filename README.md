@@ -1,12 +1,12 @@
-# Entangled — Volkan Turkut
+# Volkan Turkut
 
-A minimal generative-art landing page with a particle sphere, subtle pointer response, and links to my profiles.
+A minimal personal landing page with an animated generative particle sphere and links to ArtStation, itch.io, and GitHub.
 
 ## Tech
 
-- Plain HTML, CSS, and Canvas JavaScript
-- No framework, build step, external font, image, library, analytics, or paid asset
-- Responsive layout and reduced-motion support
+- Self-contained HTML, CSS, Canvas JavaScript, and SVG favicon
+- No build step, framework, external font, image, library, or paid asset
+- Responsive layout, subtle pointer interaction, and reduced-motion support
 
 ## Free hosting with GitHub Pages
 
@@ -14,8 +14,8 @@ This repository is named \`volkanturkut.github.io\`, so it can be published at:
 
 **https://volkanturkut.github.io/**
 
-To turn on hosting, open **Settings → Pages** in this repository. Under **Build and deployment**, select **Deploy from a branch**, choose **main** and **/(root)**, and save. GitHub Pages will publish the static site after the deployment finishes.
+Open **Settings → Pages** in this repository. Under **Build and deployment**, select **Deploy from a branch**, choose **main** and **/(root)**, and save. GitHub Pages publishes the static site after deployment finishes.
 
 ## Customize
 
-Edit \`index.html\` to change the title, metadata, artwork, or profile links. The particle sphere is drawn in-browser; no separate artwork files or third-party dependencies are required.
+Edit \`index.html\` to change the design or profile links. The sphere is rendered in the browser, and \`favicon.svg\` has a transparent background.
