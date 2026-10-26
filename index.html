@@ -3,35 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#050505">
-  <meta name="description" content="Entangled — a generative sphere by Volkan Turkut.">
-  <title>Entangled — Volkan Turkut</title>
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Volkan Turkut — art, games, and code.">
+  <title>Volkan Turkut</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <style>
-    :root{color-scheme:dark;--bg:#050505;--fg:#ecece8;--muted:#858681}
+    :root{color-scheme:dark;--bg:#000;--fg:#e8eae5;--muted:#888c87}
     *{box-sizing:border-box}
     html,body{width:100%;height:100%;margin:0}
     body{overflow:hidden;background:var(--bg);color:var(--fg);font-family:Inter,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
-    .stage{position:relative;width:100%;height:100vh;height:100svh;min-height:420px;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 46%,rgba(130,132,128,.08),transparent 56%),var(--bg)}
-    .stage:before{position:absolute;inset:0;content:"";pointer-events:none;opacity:.12;z-index:2;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");mix-blend-mode:soft-light}
-    .eyebrow,.index{position:absolute;z-index:3;top:clamp(22px,4vh,42px);margin:0;font-size:10px;font-weight:500;line-height:1;letter-spacing:.2em;text-transform:uppercase}
-    .eyebrow{left:clamp(22px,4vw,48px);color:rgba(236,236,232,.8)}
-    .index{right:clamp(22px,4vw,48px);color:var(--muted);letter-spacing:.12em;font-variant-numeric:tabular-nums}
+    .stage{position:relative;width:100%;height:100vh;height:100svh;min-height:420px;overflow:hidden;isolation:isolate;background:#000}
+    .stage:before{position:absolute;inset:0;content:"";pointer-events:none;z-index:2;opacity:.08;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");mix-blend-mode:soft-light}
     #orb{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1}
-    .footer{position:absolute;z-index:4;inset-inline:0;bottom:clamp(24px,4.6vh,46px);display:flex;flex-direction:column;align-items:center;gap:13px;padding-inline:20px;text-align:center}
-    .creator{margin:0;color:rgba(236,236,232,.9);font-size:10px;font-weight:500;letter-spacing:.18em;line-height:1.4;text-transform:uppercase}
+    .footer{position:absolute;z-index:4;inset-inline:0;bottom:clamp(25px,4.6vh,46px);display:flex;flex-direction:column;align-items:center;gap:13px;padding-inline:20px;text-align:center}
+    .creator{margin:0;color:rgba(236,238,232,.9);font-size:10px;font-weight:500;letter-spacing:.19em;line-height:1.4;text-transform:uppercase}
     .links{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px 21px;margin:0;padding:0;list-style:none}
     .links a{color:var(--muted);font-size:11px;letter-spacing:.015em;text-decoration:none;transition:color 180ms ease;outline-offset:5px}
     .links a:hover,.links a:focus-visible{color:var(--fg)}
-    .links a:focus-visible{outline:1px solid rgba(236,236,232,.6)}
-    @media(max-width:560px){.eyebrow{left:20px}.index{right:20px}.footer{bottom:max(22px,env(safe-area-inset-bottom));gap:12px}.links{gap:10px 17px}.links a{font-size:10px}}
+    .links a:focus-visible{outline:1px solid rgba(236,238,232,.6)}
+    @media(max-width:560px){.footer{bottom:max(22px,env(safe-area-inset-bottom));gap:12px}.links{gap:10px 17px}.links a{font-size:10px}}
     @media(prefers-reduced-motion:reduce){.links a{transition:none}}
   </style>
 </head>
 <body>
-  <main class="stage" aria-label="Entangled generative artwork">
-    <p class="eyebrow">Entangled</p>
-    <span class="index" aria-hidden="true">01 / 01</span>
+  <main class="stage" aria-label="Generative particle artwork">
     <canvas id="orb" aria-hidden="true"></canvas>
     <footer class="footer">
       <p class="creator">Volkan Turkut</p>
@@ -51,96 +46,193 @@
       const ctx = canvas.getContext("2d", {alpha:true});
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const TAU = Math.PI * 2;
-      const count = Math.min(2100, Math.max(1250, Math.floor(innerWidth * innerHeight / 650)));
-      let width = 0, height = 0, ratio = 1, radius = 300, points = [], edges = [];
-      let pointerX = 0, pointerY = 0, smoothX = 0, smoothY = 0, last = 0;
+      let width = 0, height = 0, ratio = 1, radius = 340;
+      let outer = [], core = [], last = 0, pointerX = 0, pointerY = 0;
+      let smoothX = 0, smoothY = 0;
 
-      function createSphere() {
-        points = [];
-        edges = [];
-        const golden = Math.PI * (3 - Math.sqrt(5));
-        for (let i = 0; i < count; i++) {
-          const y = 1 - i / (count - 1) * 2;
-          const ring = Math.sqrt(Math.max(0, 1 - y * y));
-          const a = golden * i;
-          const ripple = 1 + .038 * Math.sin(a * 2.6 + y * 12) + .022 * Math.cos(a * 5 - y * 7);
-          points.push({x:Math.cos(a)*ring*ripple,y:y*ripple,z:Math.sin(a)*ring*ripple,seed:(i*.61803398875)%1,phase:a*1.7+y*9});
+      function direction() {
+        const y = Math.random() * 2 - 1;
+        const a = Math.random() * TAU;
+        const s = Math.sqrt(Math.max(0, 1-y*y));
+        return {x:Math.cos(a)*s,y:y,z:Math.sin(a)*s};
+      }
+
+      function makeParticle(isCore) {
+        const d = direction();
+        const shell = Math.random();
+        const r = isCore
+          ? 0.025 + Math.pow(Math.random(), 0.68) * 0.29
+          : (shell < 0.72
+              ? 0.57 + Math.pow(Math.random(), 0.34) * 0.42
+              : 0.12 + Math.pow(Math.random(), 0.55) * 0.83);
+        return {
+          x:d.x,y:d.y,z:d.z,r0:r,
+          phase:Math.random()*TAU,
+          seed:Math.random(),
+          lum:Math.random(),
+          hue:Math.random(),
+          px:null,py:null
+        };
+      }
+
+      function createParticles() {
+        const area = width * height;
+        const count = Math.max(2600, Math.min(10500, Math.floor(area/125)));
+        outer = Array.from({length:count},() => makeParticle(false));
+        core = Array.from({length:Math.max(500,Math.floor(count*0.17))},() => makeParticle(true));
+      }
+
+      function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+        canvas.width = Math.floor(width * ratio);
+        canvas.height = Math.floor(height * ratio);
+        ctx.setTransform(ratio,0,0,ratio,0,0);
+        radius = Math.min(width*0.45,height*0.425,455);
+        last = 0;
+        createParticles();
+        ctx.clearRect(0,0,width,height);
+        draw(0,true);
+      }
+
+      function field(p,t) {
+        const k = 3.15;
+        const x = p.x*k, y = p.y*k, z = p.z*k;
+        let vx = -Math.sin(y+t*0.17)-Math.cos(z+t*0.29);
+        let vy = -Math.sin(z-t*0.23)-Math.cos(x-t*0.19);
+        let vz = -Math.sin(x+t*0.21)-Math.cos(y+t*0.31);
+        const dot = vx*p.x+vy*p.y+vz*p.z;
+        vx -= dot*p.x; vy -= dot*p.y; vz -= dot*p.z;
+        const len = Math.hypot(vx,vy,vz)||1;
+        return {x:vx/len,y:vy/len,z:vz/len};
+      }
+
+      function advance(p,t,dt,rate) {
+        const f = field(p,t);
+        const step = dt*rate;
+        p.x += f.x*step;
+        p.y += f.y*step;
+        p.z += f.z*step;
+        const len = Math.hypot(p.x,p.y,p.z)||1;
+        p.x /= len;p.y /= len;p.z /= len;
+      }
+
+      function project(p,t,mx,my,rx,ry,rz,r) {
+        const wobble = 1 + 0.014*Math.sin(p.phase+t*0.55) + 0.009*Math.sin(p.phase*1.9-t*0.31);
+        const x=p.x*p.r0*wobble*r, y=p.y*p.r0*wobble*r, z=p.z*p.r0*wobble*r;
+        const cy=Math.cos(ry), sy=Math.sin(ry);
+        const cp=Math.cos(rx), sp=Math.sin(rx);
+        const cr=Math.cos(rz), sr=Math.sin(rz);
+        const x1=x*cy+z*sy, z1=-x*sy+z*cy;
+        const y1=y*cp-z1*sp, z2=y*sp+z1*cp;
+        const x2=x1*cr-y1*sr, y2=x1*sr+y1*cr;
+        const depth=1+z2/(r||1)*0.105;
+        return {x:mx+x2*depth,y:my+y2*depth,z:z2/r,depth:depth};
+      }
+
+      const greenLine = [
+        "rgba(15,145,48,0.14)",
+        "rgba(23,207,65,0.17)",
+        "rgba(63,255,111,0.20)",
+        "rgba(163,255,185,0.24)",
+        "rgba(230,255,237,0.34)"
+      ];
+      const redLine = [
+        "rgba(110,4,13,0.16)",
+        "rgba(208,10,25,0.19)",
+        "rgba(255,38,48,0.23)",
+        "rgba(255,124,117,0.27)",
+        "rgba(255,225,203,0.34)"
+      ];
+
+      function drawGroup(particles,bins,t,dt,mx,my,r,rx,ry,rz,isCore) {
+        for (let i=0;i<particles.length;i++) {
+          const p=particles[i];
+          if (!reducedMotion) advance(p,t,dt,isCore?0.075:0.095);
+          const q=project(p,t,mx,my,rx,ry,rz,r);
+          const bucket=Math.min(4,Math.floor(p.lum*5));
+          const oldX=p.px===null?q.x:p.px, oldY=p.py===null?q.y:p.py;
+          bins[bucket].push([oldX,oldY,q.x,q.y,q.depth,p.seed,p.hue]);
+          p.px=q.x;p.py=q.y;
         }
-        for (let i = 0; i < count; i++) {
-          const a = points[i];
-          for (let j = i + 1; j < Math.min(count, i + 18); j++) {
-            const b = points[j], dx = a.x-b.x, dy = a.y-b.y, dz = a.z-b.z;
-            const d2 = dx*dx + dy*dy + dz*dz;
-            if (d2 < .027 && d2 > .00005 && (i+j)%3 !== 0) edges.push([i,j,d2]);
+      }
+
+      function paintBins(bins,colors,isCore) {
+        for (let b=0;b<bins.length;b++) {
+          const line=bins[b];
+          if (!line.length) continue;
+          ctx.beginPath();
+          for (let i=0;i<line.length;i++) {
+            const p=line[i];
+            ctx.moveTo(p[0],p[1]);
+            ctx.lineTo(p[2],p[3]);
+          }
+          ctx.strokeStyle=colors[b];
+          ctx.lineWidth=isCore?(0.35+b*0.13):(0.3+b*0.105);
+          ctx.stroke();
+
+          if (b>=3) {
+            ctx.beginPath();
+            for (let i=0;i<line.length;i++) {
+              const p=line[i];
+              if (p[6] < 0.055 || (p[5] > 0.35 && b===3)) continue;
+              ctx.moveTo(p[2]+0.55*p[4],p[3]);
+              ctx.arc(p[2],p[3],(0.28+b*0.12)*p[4],0,TAU);
+            }
+            ctx.fillStyle=isCore
+              ?(b===4?"rgba(255,230,218,0.26)":"rgba(255,115,111,0.15)")
+              :(b===4?"rgba(226,255,236,0.2)":"rgba(135,255,164,0.1)");
+            ctx.fill();
           }
         }
       }
 
-      function resize() {
-        width = innerWidth; height = innerHeight;
-        ratio = Math.min(devicePixelRatio || 1, 2);
-        canvas.width = Math.floor(width * ratio);
-        canvas.height = Math.floor(height * ratio);
-        ctx.setTransform(ratio,0,0,ratio,0,0);
-        radius = Math.min(width*.39,height*.36,390);
-        createSphere();
-        draw(0, true);
-      }
-
-      function project(p, sy, cy, sx, cx, sz, cz, mx, my, r, t) {
-        const wave = 1 + .018*Math.sin(p.phase+t*.32) + .01*Math.cos(p.phase*1.7-t*.2);
-        const x=p.x*wave, y=p.y*wave, z=p.z*wave;
-        const x1=x*cy+z*sy, z1=-x*sy+z*cy;
-        const y2=y*cx-z1*sx, z2=y*sx+z1*cx;
-        const x3=x1*cz-y2*sz, y3=x1*sz+y2*cz;
-        const depth=3.2/(3.2-z2*.72);
-        return {x:mx+x3*r*depth,y:my+y3*r*depth,z:z2,depth:depth,seed:p.seed};
-      }
-
-      function draw(time, staticFrame) {
-        if (!staticFrame && reducedMotion) return;
-        const t = time * .001;
-        const dt = last ? Math.min(.05,(time-last)*.001) : .016;
-        last = time;
+      function draw(time,staticFrame) {
+        const t = reducedMotion?0:time*0.001;
+        const dt = last ? Math.min(0.04,Math.max(0,(time-last)*0.001)) : 0.016;
+        last=time;
         if (!reducedMotion) {
-          smoothX += (pointerX-smoothX)*Math.min(1,dt*1.8);
-          smoothY += (pointerY-smoothY)*Math.min(1,dt*1.8);
+          smoothX += (pointerX-smoothX)*Math.min(1,dt*1.25);
+          smoothY += (pointerY-smoothY)*Math.min(1,dt*1.25);
         }
-        ctx.clearRect(0,0,width,height);
-        const mx=width*.5, my=height*.465, r=radius;
-        const halo=ctx.createRadialGradient(mx,my,r*.08,mx,my,r*1.32);
-        halo.addColorStop(0,"rgba(180,184,178,.065)");
-        halo.addColorStop(.62,"rgba(100,104,100,.022)");
-        halo.addColorStop(1,"rgba(0,0,0,0)");
-        ctx.fillStyle=halo;ctx.beginPath();ctx.arc(mx,my,r*1.32,0,TAU);ctx.fill();
 
-        const ry=(reducedMotion?0:t*.12)+smoothX*.32;
-        const rx=.16+smoothY*.2;
-        const rz=-.12;
-        const projected=points.map(p=>project(p,Math.sin(ry),Math.cos(ry),Math.sin(rx),Math.cos(rx),Math.sin(rz),Math.cos(rz),mx,my,r,t));
-        for (let e=0;e<edges.length;e++) {
-          const edge=edges[e], a=projected[edge[0]], b=projected[edge[1]];
-          const depth=(a.z+b.z)*.5;
-          const alpha=Math.max(0,(depth+.85)/1.85)*.16*(1-edge[2]/.03);
-          if(alpha<=.003)continue;
-          ctx.strokeStyle="rgba(210,214,207,"+alpha+")";
-          ctx.lineWidth=.42;
-          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
-        }
-        const sorted=projected.slice().sort((a,b)=>a.z-b.z);
-        for (let i=0;i<sorted.length;i++) {
-          const p=sorted[i];
-          const front=Math.max(0,(p.z+.35)/1.35);
-          const size=.35+(p.seed*.82);
-          ctx.fillStyle="rgba(238,239,232,"+(.14+front*.72)+")";
-          ctx.beginPath();ctx.arc(p.x,p.y,size*p.depth,0,TAU);ctx.fill();
-        }
+        ctx.globalCompositeOperation="source-over";
+        ctx.fillStyle="rgba(0,0,0,0.19)";
+        ctx.fillRect(0,0,width,height);
+        const mx=width*0.5, my=height*0.455, r=radius;
+        const glow=ctx.createRadialGradient(mx,my,0,mx,my,r*1.08);
+        glow.addColorStop(0,"rgba(30,72,35,0.055)");
+        glow.addColorStop(0.45,"rgba(16,48,22,0.035)");
+        glow.addColorStop(1,"rgba(0,0,0,0)");
+        ctx.fillStyle=glow;
+        ctx.beginPath();ctx.arc(mx,my,r*1.08,0,TAU);ctx.fill();
+
+        const coreGlow=ctx.createRadialGradient(mx,my,r*0.015,mx,my,r*0.43);
+        coreGlow.addColorStop(0,"rgba(255,20,34,0.045)");
+        coreGlow.addColorStop(0.5,"rgba(220,8,22,0.025)");
+        coreGlow.addColorStop(1,"rgba(0,0,0,0)");
+        ctx.fillStyle=coreGlow;
+        ctx.beginPath();ctx.arc(mx,my,r*0.43,0,TAU);ctx.fill();
+
+        ctx.globalCompositeOperation="lighter";
+        const outerBins=[[],[],[],[],[]];
+        const coreBins=[[],[],[],[],[]];
+        const yaw=(reducedMotion?0:t*0.055)+smoothX*0.18;
+        const pitch=0.10+smoothY*0.16;
+        const roll=-0.08;
+        drawGroup(outer,outerBins,t,dt,mx,my,r, pitch,yaw,roll,false);
+        drawGroup(core,coreBins,t,dt,mx,my,r,pitch,yaw,roll,true);
+        paintBins(outerBins,greenLine,false);
+        paintBins(coreBins,redLine,true);
+        ctx.globalCompositeOperation="source-over";
+
         if (!staticFrame && !reducedMotion) requestAnimationFrame(draw);
       }
 
       canvas.addEventListener("pointermove",e=>{
-        pointerX=(e.clientX/width-.5)*2;
-        pointerY=(e.clientY/height-.5)*2;
+        pointerX=(e.clientX/width-0.5)*2;
+        pointerY=(e.clientY/height-0.5)*2;
       },{passive:true});
       canvas.addEventListener("pointerleave",()=>{pointerX=0;pointerY=0;},{passive:true});
       window.addEventListener("resize",resize,{passive:true});
