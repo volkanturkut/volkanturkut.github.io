@@ -98,12 +98,13 @@ jobs:
           assert.ok(html.includes('html.no-webgl .fallback'), 'a low-cost fallback visual must be available without WebGL');
           assert.ok(html.includes('WebGLRenderingContext'), 'the WebGL capability check must remain enabled');
           assert.ok(html.includes('__ENTANGLED_PERF__'), 'performance profile should be visible for automated smoke checks');
-          assert.ok(html.includes('build: "low-end-r9"'), 'deployment profile marker should be present for live browser verification');
+          assert.ok(html.includes('build: "low-end-r10"'), 'deployment profile marker should be present for live browser verification');
           assert.ok(html.includes('maxDevicePixelRatio,'), 'adaptive DPR cap must be exposed in the performance profile');
           assert.ok(html.includes('const targetFrameRate = reducedMotion ? 15 : lowResource ? 24 : 30'), 'reduced-motion and adaptive frame caps should remain enabled');
-          assert.ok(html.includes('const particleCount = lowResource ? 16384 : 65536'), 'low-resource devices must receive a smaller particle grid');
+          assert.ok(html.includes('const particleCount = lowResource ? 16384 : 32768'), 'low-resource devices must receive a smaller particle grid');
           assert.ok(html.includes('const maxDevicePixelRatio = lowResource ? 1.0 : 1.25'), 'low-resource devices must use a lower pixel-ratio cap');
           assert.ok(html.includes('window.__ENTANGLED_PERF_PARTICLES__ = particleCount'), 'adaptive particle budget must be available before renderer import');
+          assert.ok(html.includes('const maxRenderPixels = 1000000;'), 'render-pixel budget must stay capped at one megapixel');
           assert.ok(html.includes('renderPixelBudget: maxRenderPixels'), 'render-pixel budget should remain enabled');
           assert.ok(html.includes('await import("./bundle.min.js")'), 'bundle should load only through the WebGL-aware module loader');
           assert.ok(html.includes('await import("./three.r157.min.js")'), 'Three.js must load only after WebGL capability check');
@@ -119,7 +120,7 @@ jobs:
           assert.ok(optimizedBundle.includes('$t=1'), 'standalone visual must have a valid single top-window identifier');
           assert.ok(optimizedBundle.includes('Ht&&(s=r,l=i)'), 'single-window mode must size the canvas to the viewport rather than the physical display');
           assert.ok(optimizedBundle.includes('"complete"===document.readyState&&"hidden"!=document.visibilityState&&Bt()'), 'dynamically imported bundle must initialize even if page load already fired');
-          assert.ok(optimizedBundle.includes('ut=Je.__ENTANGLED_PERF_PARTICLES__||65536'), 'GPU particle count must follow the adaptive hardware profile');
+          assert.ok(optimizedBundle.includes('ut=Je.__ENTANGLED_PERF_PARTICLES__||32768'), 'GPU particle count must follow the adaptive hardware profile');
           assert.ok(optimizedBundle.includes('new Ye.WebGLRenderer({antialias:!1,depthBuffer:!0,alpha:ht<1,powerPreference:"low-power"})'), 'renderer should request low-power GPU mode without MSAA');
           assert.ok(!optimizedBundle.includes('console.log("today:"'), 'startup diagnostic logging should be absent');
           assert.ok(!optimizedBundle.includes('DETAILED FEATURES'), 'feature-dump logging should be absent');

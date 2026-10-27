@@ -112,7 +112,7 @@ html.no-webgl canvas { display: none !important; }
 <script>
 (() => {
   const nativeDpr = Number(window.devicePixelRatio) || 1;
-  const maxRenderPixels = 1500000;
+  const maxRenderPixels = 1000000;
   const cores = Number(navigator.hardwareConcurrency) || 0;
   const memory = Number(navigator.deviceMemory) || 0;
   const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
@@ -121,7 +121,7 @@ html.no-webgl canvas { display: none !important; }
     (memory > 0 && memory <= 4) ||
     (coarsePointer && cores > 0 && cores <= 6) ||
     (!cores && !memory);
-  const particleCount = lowResource ? 16384 : 65536;
+  const particleCount = lowResource ? 16384 : 32768;
   const maxDevicePixelRatio = lowResource ? 1.0 : 1.25;
   window.__ENTANGLED_PERF_PARTICLES__ = particleCount;
   const getRenderScale = () => Math.min(

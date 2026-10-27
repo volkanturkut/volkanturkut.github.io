@@ -23,13 +23,13 @@ The eight original files are preserved for comparison and study; they are exclud
 
 The active root `bundle.min.js` is intentionally modified. It is no longer a 100%-identical copy of the original runtime:
 
-1. **GPU workload:** `ut=15e5` (1,500,000) changed to a hardware-aware cap: 16,384 particles on low-resource hardware and 65,536 on standard hardware. That is about **98.9% fewer** particles on low-resource devices and **95.6% fewer** on standard devices.
+1. **GPU workload:** `ut=15e5` (1,500,000) changed to a hardware-aware cap: 16,384 particles on low-resource hardware and 32,768 on standard hardware. That is about **98.9% fewer** particles on low-resource devices and **97.8% fewer** on standard devices.
 2. **Window features:** multi-window management is hard-disabled; its manager is not initialized and the screen-permission/window synchronization flow is bypassed.
 3. **Input controls:** mouse, touch, drag, and wheel listeners used by the original control class are removed.
 4. **Keyboard actions:** the original Space pause, D debug, and S screenshot-save key handler is removed.
 5. **Low-DPI behavior:** the old fallback that doubled the internal render size when devicePixelRatio was 1 or less is removed.
-6. **Quality governor:** `index.html` caps effective device-pixel ratio at 1.0 on low-resource hardware and 1.25 on standard hardware, and limits the render target to about 1.5 million pixels. This reduces expensive high-DPI and very-large-screen rendering.
-7. **Frame governor:** global animation-frame callbacks are capped at 30 FPS, or 15 FPS for `prefers-reduced-motion`.
+6. **Quality governor:** `index.html` caps effective device-pixel ratio at 1.0 on low-resource hardware and 1.25 on standard hardware, and limits the render target to about 1 million pixels. This reduces expensive high-DPI and very-large-screen rendering.
+7. **Frame governor:** global animation-frame callbacks are capped at 24 FPS on low-resource hardware, 30 FPS on standard hardware, or 15 FPS for `prefers-reduced-motion`.
 8. **Graceful fallback:** if the browser lacks the WebGL API or the renderer fails to initialize, a simple CSS sphere illustration replaces the WebGL artwork instead of leaving a fully blank page.
 9. **Portfolio shell:** the root HTML retains the creator name and ArtStation, itch.io, and GitHub links. The page remains local/static, with no external font or runtime CDN.
 
