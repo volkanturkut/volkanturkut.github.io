@@ -19,7 +19,7 @@ The preserved upstream source files remain unchanged under [original-source/vers
 
 - Particle workload adapts to device capabilities: 16,384 particles on low-resource devices and 32,768 on standard devices.
 - WebGL render scale is capped at 1.0 on low-resource devices and 1.25 on standard devices, with a one-megapixel render budget.
-- Animation callbacks are capped at 24 FPS on low-resource devices and 30 FPS on standard devices, or 15 FPS when reduced motion is requested.
+- Animation callbacks are capped at 24 FPS on low-resource devices and 30 FPS on standard devices, or 15 FPS when reduced motion is requested. Hidden tabs skip generator work, and fallback activation stops queued animation callbacks.
 - Multi-window synchronization, pointer/touch controls, keyboard shortcuts, and diagnostic feature dumps are disabled.
 - Expensive runtime modules are dynamically imported only when WebGL APIs are present.
 - A lightweight CSS fallback appears if JavaScript is disabled, WebGL is unavailable, the renderer fails, the context is lost, or initialization times out. The watchdog requires a sized canvas and a scheduled frame before treating rendering as started.

@@ -53,6 +53,15 @@ export function initializePerformanceProfile() {
   // Maintain compositor-aligned animation while limiting how often the
   // expensive generator is allowed to update.
   window.requestAnimationFrame = (callback) => nativeRequestAnimationFrame((timestamp) => {
+    if (window.__ENTANGLED_STOP_RENDERING__) return;
+
+    // Avoid running generator callbacks in background tabs. The native frame
+    // scheduler will resume the pending callback when the page becomes visible.
+    if (document.visibilityState === "hidden") {
+      window.requestAnimationFrame(callback);
+      return;
+    }
+
     const minimumFrameInterval = 1000 / getTargetFrameRate();
     if (timestamp - lastFrameTimestamp < minimumFrameInterval) {
       window.requestAnimationFrame(callback);
@@ -81,6 +90,7 @@ export function initializePerformanceProfile() {
     multiWindow: false,
     pointerControls: false,
     keyboardShortcuts: false,
-    get frameCount() { return renderedFrameCount; }
+    get frameCount() { return renderedFrameCount; },
+    get stopped() { return Boolean(window.__ENTANGLED_STOP_RENDERING__); }
   });
 }

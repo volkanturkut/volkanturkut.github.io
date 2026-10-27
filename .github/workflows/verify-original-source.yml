@@ -109,6 +109,10 @@ jobs:
           assert.ok(performanceSource.includes('build: "low-end-r12"'), 'deployment profile marker should be present for live browser verification');
           assert.ok(performanceSource.includes('maxDevicePixelRatio,'), 'adaptive DPR cap must be exposed in the performance profile');
           assert.ok(performanceSource.includes('getTargetFrameRate'), 'reduced-motion and adaptive frame caps should remain enabled');
+          assert.ok(appSource.includes('window.__ENTANGLED_STOP_RENDERING__ = true;'), 'fallback must signal the renderer to stop');
+          assert.ok(performanceSource.includes('if (window.__ENTANGLED_STOP_RENDERING__) return;'), 'queued animation callbacks must stop after fallback');
+          assert.ok(performanceSource.includes('document.visibilityState === "hidden"'), 'hidden tabs should not run the expensive generator callback');
+          assert.ok(performanceSource.includes('get stopped() { return Boolean(window.__ENTANGLED_STOP_RENDERING__); }'), 'stopped state should be observable to smoke tests');
           assert.ok(performanceSource.includes('LOW_RESOURCE_PARTICLES = 16_384') && performanceSource.includes('STANDARD_PARTICLES = 32_768'), 'hardware-aware particle caps should remain enabled');
           assert.ok(performanceSource.includes('window.__ENTANGLED_PERF_PARTICLES__ = particleCount'), 'adaptive particle budget must be available before renderer import');
           assert.ok(performanceSource.includes('"__ENTANGLED_RENDER_SCALE__"'), 'internal DPR scale should not override the browser native devicePixelRatio');

@@ -360,18 +360,30 @@ jobs:
               return canvas && canvas.width > 0 && canvas.height > 0 &&
                 window.__ENTANGLED_PERF__?.frameCount > 0;
             }, null, { timeout: 45000 });
-            const contextLossPrevented = await lossPage.evaluate(() => {
+            const contextLossState = await lossPage.evaluate(() => {
               const canvas = document.querySelector('canvas#scene');
+              const beforeFrameCount = window.__ENTANGLED_PERF__?.frameCount ?? 0;
               const event = new Event('webglcontextlost', { cancelable: true });
-              return canvas.dispatchEvent(event) === false;
+              return {
+                prevented: canvas.dispatchEvent(event) === false,
+                beforeFrameCount,
+                stopped: window.__ENTANGLED_STOP_RENDERING__ === true,
+                profileStopped: window.__ENTANGLED_PERF__?.stopped === true,
+              };
             });
             await lossPage.waitForFunction(() =>
               document.documentElement.classList.contains('no-webgl'));
-            assert.equal(contextLossPrevented, true, 'context-loss event should be prevented while fallback is shown');
+            assert.equal(contextLossState.prevented, true, 'context-loss event should be prevented while fallback is shown');
+            assert.equal(contextLossState.stopped, true, 'fallback must signal the renderer loop to stop');
+            assert.equal(contextLossState.profileStopped, true, 'performance governor must report stopped state');
             assert.equal(await lossPage.locator('.fallback').evaluate(el => getComputedStyle(el).display), 'grid');
             assert.equal(await lossPage.locator('canvas#scene').evaluate(el => getComputedStyle(el).display), 'none');
+            await lossPage.waitForTimeout(250);
+            const afterContextLossFrames = await lossPage.evaluate(() => window.__ENTANGLED_PERF__?.frameCount ?? 0);
+            assert.equal(afterContextLossFrames, contextLossState.beforeFrameCount,
+              'renderer callbacks must stop increasing after fallback, rather than burning CPU in the background');
             assert.deepEqual(lossErrors, [], 'context-loss recovery should not throw JavaScript errors');
-            console.log('PASS WebGL context-loss fallback');
+            console.log('PASS WebGL context-loss fallback and stopped animation loop');
             await lossContext.close();
 
             // Regression test for the startup watchdog: a sized canvas is not proof

@@ -2,6 +2,8 @@ const root = document.documentElement;
 const RENDERER_TIMEOUT_MS = 30_000;
 
 function showFallback(error) {
+  // Prevent queued animation callbacks from continuing to spend CPU after fallback.
+  window.__ENTANGLED_STOP_RENDERING__ = true;
   if (error) {
     window.__ENTANGLED_LOAD_ERROR__ = String(error.stack || error.message || error);
   }
