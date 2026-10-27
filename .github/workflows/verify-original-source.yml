@@ -119,6 +119,9 @@ jobs:
           assert.ok(appSource.includes('loadClassicScript("./fxhash.min.js")'), 'fxhash runtime must load only after WebGL capability check');
           assert.ok(appSource.includes('MutationObserver'), 'canvas recovery and accessibility setup should use a DOM observer');
           assert.ok(appSource.includes('webglcontextlost'), 'WebGL context loss should trigger the lightweight fallback');
+          assert.ok(appSource.includes('window.__ENTANGLED_PERF__?.frameCount > 0'), 'startup watchdog must require a first scheduled frame, not just an allocated canvas');
+          assert.ok(appSource.includes('The renderer did not begin rendering within 30 seconds.'), 'startup timeout must be diagnosable and testable');
+          assert.ok(appSource.includes('if (startupTimedOut) return;'), 'a stalled renderer must not continue importing heavy runtime files after timeout');
           for (const runtime of ['three.r157.min.js', 'fxhash.min.js', 'bundle.min.js']) {
             assert.ok(existsSync(runtime), `runtime asset must exist: ${runtime}`);
           }

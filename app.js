@@ -24,7 +24,7 @@ function loadClassicScript(path) {
   });
 }
 
-function observeRendererCanvas(timeoutId) {
+function observeRendererCanvas() {
   const decoratedCanvases = new WeakSet();
   const decorateCanvas = (canvas) => {
     if (decoratedCanvases.has(canvas)) return;
@@ -44,7 +44,6 @@ function observeRendererCanvas(timeoutId) {
 
     decorateCanvas(canvas);
     if (canvas.width > 0 && canvas.height > 0) {
-      window.clearTimeout(timeoutId);
       observer.disconnect();
     }
   });
@@ -60,7 +59,6 @@ function observeRendererCanvas(timeoutId) {
   if (existingCanvas) {
     decorateCanvas(existingCanvas);
     if (existingCanvas.width > 0 && existingCanvas.height > 0) {
-      window.clearTimeout(timeoutId);
       observer.disconnect();
     }
   }
@@ -76,29 +74,45 @@ async function startArtwork() {
     return;
   }
 
-  // Start the watchdog before importing large runtime files. A stalled load
-  // should never leave an empty black page forever on a slow device.
+  let startupTimedOut = false;
+  // A canvas can be allocated before its first frame. Keep the watchdog armed
+  // until the renderer has actually scheduled at least one governed frame.
   const timeoutId = window.setTimeout(() => {
     const canvas = document.querySelector("canvas#scene");
-    if (!canvas || canvas.width === 0 || canvas.height === 0) {
-      showFallback(new Error("The renderer did not create a usable canvas within 30 seconds."));
-      canvasObserver.disconnect();
+    const rendererStarted = Boolean(
+      canvas &&
+      canvas.width > 0 &&
+      canvas.height > 0 &&
+      window.__ENTANGLED_PERF__?.frameCount > 0
+    );
+
+    if (!rendererStarted) {
+      startupTimedOut = true;
+      showFallback(new Error("The renderer did not begin rendering within 30 seconds."));
     }
+
+    canvasObserver.disconnect();
   }, RENDERER_TIMEOUT_MS);
-  const canvasObserver = observeRendererCanvas(timeoutId);
+  const canvasObserver = observeRendererCanvas();
 
   try {
     // Install hardware-aware limits before initializing the renderer. This
     // module is intentionally lazy so the no-WebGL shell does minimal work.
     const { initializePerformanceProfile } = await import("./performance.js");
+    if (startupTimedOut) return;
     initializePerformanceProfile();
+
     await import("./three.r157.min.js");
+    if (startupTimedOut) return;
+
     await loadClassicScript("./fxhash.min.js");
+    if (startupTimedOut) return;
+
     await import("./bundle.min.js");
   } catch (error) {
     window.clearTimeout(timeoutId);
     canvasObserver.disconnect();
-    showFallback(error);
+    if (!startupTimedOut) showFallback(error);
   }
 }
 

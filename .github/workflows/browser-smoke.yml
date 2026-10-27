@@ -347,6 +347,85 @@ jobs:
             assert.deepEqual(noJsState.links, ['ArtStation', 'itch.io', 'GitHub']);
             await noJsContext.close();
 
+
+            // WebGL context loss must hide the canvas and show the accessible CSS
+            // fallback instead of leaving the visitor with a black screen.
+            const lossContext = await browser.newContext({ viewport: { width: 800, height: 600 } });
+            const lossPage = await lossContext.newPage();
+            const lossErrors = [];
+            lossPage.on('pageerror', (error) => lossErrors.push(error.message));
+            await lossPage.goto(process.env.BASE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await lossPage.waitForFunction(() => {
+              const canvas = document.querySelector('canvas#scene');
+              return canvas && canvas.width > 0 && canvas.height > 0 &&
+                window.__ENTANGLED_PERF__?.frameCount > 0;
+            }, null, { timeout: 45000 });
+            const contextLossPrevented = await lossPage.evaluate(() => {
+              const canvas = document.querySelector('canvas#scene');
+              const event = new Event('webglcontextlost', { cancelable: true });
+              return canvas.dispatchEvent(event) === false;
+            });
+            await lossPage.waitForFunction(() =>
+              document.documentElement.classList.contains('no-webgl'));
+            assert.equal(contextLossPrevented, true, 'context-loss event should be prevented while fallback is shown');
+            assert.equal(await lossPage.locator('.fallback').evaluate(el => getComputedStyle(el).display), 'grid');
+            assert.equal(await lossPage.locator('canvas#scene').evaluate(el => getComputedStyle(el).display), 'none');
+            assert.deepEqual(lossErrors, [], 'context-loss recovery should not throw JavaScript errors');
+            console.log('PASS WebGL context-loss fallback');
+            await lossContext.close();
+
+            // Regression test for the startup watchdog: a sized canvas is not proof
+            // that rendering began. Stall the first runtime import and expose a fake
+            // allocated canvas to reproduce the case that used to cancel the watchdog.
+            const watchdogContext = await browser.newContext({ viewport: { width: 800, height: 600 } });
+            await watchdogContext.addInitScript(() => {
+              const nativeSetTimeout = window.setTimeout.bind(window);
+              window.setTimeout = (callback, delay, ...args) =>
+                nativeSetTimeout(callback, delay === 30000 ? 60 : delay, ...args);
+
+              const nativeQuerySelector = Document.prototype.querySelector;
+              const nativeCreateElement = Document.prototype.createElement;
+              Document.prototype.querySelector = function(selector) {
+                const found = nativeQuerySelector.call(this, selector);
+                if (selector !== 'canvas#scene' || found || !this.body) return found;
+                const canvas = nativeCreateElement.call(this, 'canvas');
+                canvas.id = 'scene';
+                canvas.width = 16;
+                canvas.height = 16;
+                this.body.append(canvas);
+                return canvas;
+              };
+            });
+            const watchdogPage = await watchdogContext.newPage();
+            const watchdogErrors = [];
+            watchdogPage.on('pageerror', error => watchdogErrors.push(error.message));
+            await watchdogPage.route('**/performance.js', route => route.fulfill({
+              status: 200,
+              contentType: 'text/javascript',
+              body: 'await new Promise(() => {});',
+            }));
+            const watchdogResponse = await watchdogPage.goto(process.env.BASE_URL, {
+              waitUntil: 'commit',
+              timeout: 45000,
+            });
+            assert.equal(watchdogResponse?.status(), 200, 'watchdog test page must return HTTP 200');
+            await watchdogPage.waitForFunction(() =>
+              document.documentElement.classList.contains('no-webgl'), null, { timeout: 5000 });
+            const watchdogState = await watchdogPage.evaluate(() => ({
+              fallbackDisplay: getComputedStyle(document.querySelector('.fallback')).display,
+              loadError: window.__ENTANGLED_LOAD_ERROR__ || '',
+              performanceProfile: Boolean(window.__ENTANGLED_PERF__),
+            }));
+            assert.equal(watchdogState.fallbackDisplay, 'grid',
+              'watchdog must recover even when an allocated canvas has not rendered a frame');
+            assert.match(watchdogState.loadError, /did not begin rendering within 30 seconds/,
+              'watchdog should explain the renderer-start timeout');
+            assert.equal(watchdogState.performanceProfile, false,
+              'a stalled first import must not initialize the performance module');
+            assert.deepEqual(watchdogErrors, [], 'startup-watchdog fallback should not throw JavaScript errors');
+            console.log('PASS startup watchdog when canvas exists but renderer never starts');
+            await watchdogContext.close();
+
             console.log('ALL_DEVICE_SMOKE_TESTS_PASSED', JSON.stringify(reports, null, 2));
           } finally {
             await browser.close();
