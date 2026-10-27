@@ -64,7 +64,7 @@ jobs:
           assert.ok(html.includes('src="./app.js"'), 'page should use the native ES module entry point');
           const originalScripts = [
             'await import("./three.r157.min.js")',
-            'fxhash.src = "./fxhash.min.js"',
+            'loadClassicScript("./fxhash.min.js")',
             'await import("./bundle.min.js")',
           ];
           const offsets = originalScripts.map((s) => appSource.indexOf(s));
