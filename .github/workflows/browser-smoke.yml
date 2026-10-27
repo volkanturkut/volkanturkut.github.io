@@ -72,7 +72,7 @@ jobs:
               }
 
               if (response?.status() === 200) {
-                const activeBuild = await page.evaluate(() => window.__ENTANGLED_PERF__?.build === 'low-end-r2');
+                const activeBuild = await page.evaluate(() => window.__ENTANGLED_PERF__?.build === 'low-end-r3');
                 if (activeBuild) {
                   console.log(`${label}: latest performance profile is live after attempt ${attempt}`);
                   return response;
@@ -81,7 +81,7 @@ jobs:
 
               if (attempt < 60) await page.waitForTimeout(5000);
             }
-            throw new Error('Published site did not expose performance profile low-end-r2 within 5 minutes');
+            throw new Error('Published site did not expose performance profile low-end-r3 within 5 minutes');
           }
 
           const scenarios = [
@@ -190,7 +190,7 @@ jobs:
               assert.equal(state.noWebGLFallback, false, `${scenario.name}: renderer fell back; rendererLoadError=${state.rendererLoadError}, pageErrors=${JSON.stringify(pageErrors)}`);
               assert.ok(state.canvas.width > 0 && state.canvas.height > 0, `${scenario.name}: canvas resolution must be positive`);
               assert.ok(state.profile, `${scenario.name}: performance profile must exist`);
-              assert.equal(state.profile.build, 'low-end-r2');
+              assert.equal(state.profile.build, 'low-end-r3');
               assert.ok(state.dpr > 0 && state.dpr <= 1.25, `${scenario.name}: DPR must be capped at 1.25, got ${state.dpr}`);
               assert.ok(state.canvas.width * state.canvas.height <= state.profile.renderPixelBudget + 10000,
                 `${scenario.name}: render target exceeded pixel-area budget: ${state.canvas.width}x${state.canvas.height}`);
@@ -250,7 +250,7 @@ jobs:
             assert.equal(fallbackState.noWebGL, true);
             assert.equal(fallbackState.fallbackDisplay, 'grid');
             assert.equal(fallbackState.canvasCount, 0);
-            assert.equal(fallbackState.profileBuild, 'low-end-r2');
+            assert.equal(fallbackState.profileBuild, 'low-end-r3');
             assert.equal(bundleRequested, false, 'heavy bundle must not load if WebGL APIs are absent');
             assert.deepEqual(fallbackErrors, [], 'no-WebGL fallback path should not throw JavaScript errors');
             await fallbackContext.close();
