@@ -32,7 +32,7 @@ jobs:
         run: |
           set -euo pipefail
           npm init -y
-          npm install --no-save playwright
+          npm install --no-save playwright pngjs
           npx playwright install chromium
 
       - name: Serve the checked-out website
@@ -60,6 +60,23 @@ jobs:
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import { chromium } from 'playwright';
+          import { PNG } from 'pngjs';
+
+          function countNonBackgroundPixels(png) {
+            const bg = [png.data[0], png.data[1], png.data[2]];
+            let count = 0;
+            const artHeight = Math.max(1, png.height - 120);
+            for (let y = 0; y < artHeight; y++) {
+              for (let x = 0; x < png.width; x++) {
+                const i = (y * png.width + x) * 4;
+                const distance = Math.abs(png.data[i] - bg[0]) +
+                  Math.abs(png.data[i + 1] - bg[1]) +
+                  Math.abs(png.data[i + 2] - bg[2]);
+                if (distance > 45) count++;
+              }
+            }
+            return count;
+          }
 
           const browser = await chromium.launch({
             headless: true,
@@ -80,8 +97,8 @@ jobs:
               timeout: 45000,
             });
             assert.equal(response?.status(), 200, `${label}: local site must return HTTP 200`);
-            const activeBuild = await page.evaluate(() => window.__ENTANGLED_PERF__?.build === 'low-end-r5');
-            assert.ok(activeBuild, `${label}: expected low-end-r5 performance profile from checked-out commit`);
+            const activeBuild = await page.evaluate(() => window.__ENTANGLED_PERF__?.build === 'low-end-r6');
+            assert.ok(activeBuild, `${label}: expected low-end-r6 performance profile from checked-out commit`);
             console.log(`${label}: running checked-out performance profile from ${process.env.EXPECTED_REVISION}`);
             return response;
           }
@@ -177,6 +194,14 @@ jobs:
               });
               const afterFrames = state.profile?.frameCount ?? 0;
               const frameCountDelta = afterFrames - beforeFrames;
+              if (scenario.name === 'desktop') {
+                const screenshot = await page.screenshot({ path: '/tmp/entangled-desktop.png', fullPage: true });
+                const png = PNG.sync.read(screenshot);
+                state.artworkNonBackgroundPixels = countNonBackgroundPixels(png);
+                console.log('OPTIMIZED_VISUAL_PIXELS', state.artworkNonBackgroundPixels);
+                assert.ok(state.artworkNonBackgroundPixels > 1000,
+                  'optimized renderer must draw visible artwork, not only a black canvas');
+              }
               const runtimeState = {
                 scenario: scenario.name,
                 expectedRevision: process.env.EXPECTED_REVISION,
@@ -192,7 +217,7 @@ jobs:
               assert.equal(state.noWebGLFallback, false, `${scenario.name}: renderer fell back; rendererLoadError=${state.rendererLoadError}, pageErrors=${JSON.stringify(pageErrors)}`);
               assert.ok(state.canvas.width > 0 && state.canvas.height > 0, `${scenario.name}: canvas resolution must be positive`);
               assert.ok(state.profile, `${scenario.name}: performance profile must exist`);
-              assert.equal(state.profile.build, 'low-end-r5');
+              assert.equal(state.profile.build, 'low-end-r6');
               assert.ok(state.dpr > 0 && state.dpr <= 1.25, `${scenario.name}: DPR must be capped at 1.25, got ${state.dpr}`);
               assert.ok(state.canvas.width * state.canvas.height <= state.profile.renderPixelBudget + 10000,
                 `${scenario.name}: render target exceeded pixel-area budget: ${state.canvas.width}x${state.canvas.height}`);
@@ -217,9 +242,6 @@ jobs:
               assert.deepEqual(pageErrors, [], `${scenario.name}: no uncaught JavaScript errors`);
               assert.deepEqual(failedRuntimeRequests, [], `${scenario.name}: runtime assets must load`);
 
-              if (scenario.name === 'desktop') {
-                await page.screenshot({ path: '/tmp/entangled-desktop.png', fullPage: true });
-              }
               await context.close();
             }
 
@@ -255,7 +277,7 @@ jobs:
             assert.equal(fallbackState.noWebGL, true);
             assert.equal(fallbackState.fallbackDisplay, 'grid');
             assert.equal(fallbackState.canvasCount, 0);
-            assert.equal(fallbackState.profileBuild, 'low-end-r5');
+            assert.equal(fallbackState.profileBuild, 'low-end-r6');
             assert.deepEqual(heavyRuntimeRequests, [], 'none of the heavy runtime assets should load if WebGL APIs are absent');
             assert.deepEqual(fallbackErrors, [], 'no-WebGL fallback path should not throw JavaScript errors');
             await fallbackContext.close();
@@ -276,7 +298,7 @@ jobs:
             baselinePage.on('console', (message) => {
               if (message.type() === 'error') baselineConsoleErrors.push(message.text());
             });
-            const baselineUrl = `${process.env.BASE_URL}/original-source/versions/v0-original-entangled/index.html?disableWindowing=true`;
+            const baselineUrl = `${process.env.BASE_URL}/original-source/versions/v0-original-entangled/index.html`;
             const baselineResponse = await baselinePage.goto(baselineUrl, {
               waitUntil: 'domcontentloaded',
               timeout: 45000,
@@ -298,14 +320,19 @@ jobs:
                 pixelRatio: window.devicePixelRatio,
               };
             });
-            await baselinePage.screenshot({ path: '/tmp/entangled-pristine-baseline.png', fullPage: true });
+            const baselineScreenshot = await baselinePage.screenshot({ path: '/tmp/entangled-pristine-baseline.png', fullPage: true });
+            const baselinePng = PNG.sync.read(baselineScreenshot);
+            const baselineArtworkPixels = countNonBackgroundPixels(baselinePng);
             console.log('PRISTINE_UPSTREAM_BASELINE', JSON.stringify({
               ...baselineState,
+              baselineArtworkPixels,
               baselineErrors,
               baselineConsoleErrors,
             }, null, 2));
             assert.ok(baselineState.canvas, 'pristine upstream renderer must create a canvas');
             assert.ok(baselineState.canvas.width > 0 && baselineState.canvas.height > 0);
+            assert.ok(baselineArtworkPixels > 1000,
+              'pristine upstream baseline should draw visible artwork in the browser test environment');
             await baselineContext.close();
 
             console.log('ALL_DEVICE_SMOKE_TESTS_PASSED', JSON.stringify(reports, null, 2));
