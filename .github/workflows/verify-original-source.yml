@@ -31,12 +31,10 @@ jobs:
             echo "PASS exact upstream blob: $file ($actual)"
           }
 
-          # Original runtime files (these are loaded by the page).
-          check_blob "bundle.min.js" "a554a6a3046692c50125decc6b094238598535f8"
-          check_blob "fxhash.min.js" "8a91ebf2f97f6c30496aae43b90c01141a0de2df"
-          check_blob "three.r157.min.js" "7a384bfb1b51375a18e6480b984e0834f5525d1c"
-
-          # Remaining files from the original v0 source folder, preserved as reference.
+          # The preserved pristine upstream files stay byte-for-byte untouched.
+          check_blob "original-source/versions/v0-original-entangled/bundle.min.js" "a554a6a3046692c50125decc6b094238598535f8"
+          check_blob "original-source/versions/v0-original-entangled/fxhash.min.js" "8a91ebf2f97f6c30496aae43b90c01141a0de2df"
+          check_blob "original-source/versions/v0-original-entangled/three.r157.min.js" "7a384bfb1b51375a18e6480b984e0834f5525d1c"
           check_blob "original-source/versions/v0-original-entangled/bundle.beautified.js" "f5d0cbd700c64d6aedf7094ab1fff06ef1a05cfe"
           check_blob "original-source/versions/v0-original-entangled/ITERATION_COLORS.txt" "04977253db54288e36a7a23240e6fe45c6343811"
           check_blob "original-source/versions/v0-original-entangled/index.html" "0a0da8986b2783f7e072309058284d09f797c0f7"
@@ -55,7 +53,7 @@ jobs:
           const originalScripts = [
             'src="./three.r157.min.js"',
             'src="./fxhash.min.js"',
-            'src="./bundle.min.js"',
+            'src="./bundle.min.js?disableWindowing=true"',
           ];
           const offsets = originalScripts.map((s) => html.indexOf(s));
           assert.ok(offsets.every((i) => i >= 0), 'all three original runtime scripts must be referenced');
@@ -77,7 +75,8 @@ jobs:
 
           const localResources = [...html.matchAll(/(?:src|href)=["'](\.\/[^"']+)["']/g)].map((m) => m[1]);
           for (const resource of localResources) {
-            assert.ok(existsSync(resource.slice(2)), `missing local resource: ${resource}`);
+            const localPath = resource.slice(2).split(/[?#]/, 1)[0];
+            assert.ok(existsSync(localPath), `missing local resource: ${resource}`);
           }
 
           const requiredPortfolioItems = [
@@ -91,6 +90,18 @@ jobs:
           }
 
           assert.ok(!html.includes('favicon.svg'), 'custom non-original favicon should not be referenced');
+          assert.ok(html.includes('__ENTANGLED_PERF__'), 'performance profile should be visible for automated smoke checks');
+          assert.ok(html.includes('maxDevicePixelRatio: 1.25'), 'DPR cap should remain enabled');
+          assert.ok(html.includes('targetFramesPerSecond: 30'), 'frame-rate cap should remain enabled');
+          assert.ok(html.includes('pointerControls: false'), 'pointer/touch interaction should remain disabled');
+          assert.ok(html.includes('keyboardShortcuts: false'), 'keyboard shortcuts should remain disabled');
+          assert.ok(html.includes('disableWindowing=true'), 'the bundle must run with multi-window management disabled');
+          const optimizedBundle = readFileSync('bundle.min.js', 'utf8');
+          assert.ok(optimizedBundle.includes('ut=262144'), 'GPU particle budget must remain capped at 262,144');
+          assert.ok(!optimizedBundle.includes('ut=15e5'), 'original 1.5-million particle workload must not return');
+          for (const input of ['window.addEventListener("touchstart"', 'window.addEventListener("mousedown"', 'window.addEventListener("mousemove"', 'window.addEventListener("wheel"', 'document.addEventListener("keydown"']) {
+            assert.ok(!optimizedBundle.includes(input), `non-visual event handler must stay removed: ${input}`);
+          }
           assert.ok(!existsSync('favicon.svg'), 'custom non-original favicon should be removed from the repository');
           const config = readFileSync('_config.yml', 'utf8');
           for (const excluded of ['.github', 'original-source', 'README.md', 'ORIGINAL_SOURCE_AUDIT.md', 'THIRD_PARTY_NOTICES.md']) {
