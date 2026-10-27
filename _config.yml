@@ -1,0 +1,8 @@
+# Keep the published page minimal. Preserve research/reference files in GitHub,
+# but do not publish them as extra pages or unused source bundles.
+exclude:
+  - .github
+  - original-source
+  - README.md
+  - ORIGINAL_SOURCE_AUDIT.md
+  - THIRD_PARTY_NOTICES.md
