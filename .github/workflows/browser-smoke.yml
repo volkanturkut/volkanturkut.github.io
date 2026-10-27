@@ -110,6 +110,7 @@ jobs:
             { name: 'iphone-like', viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, hardwareConcurrency: 4, deviceMemory: 4 },
             { name: 'small-android-like', viewport: { width: 360, height: 800 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, hardwareConcurrency: 4, deviceMemory: 4 },
             { name: 'tablet', viewport: { width: 768, height: 1024 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, hardwareConcurrency: 8, deviceMemory: 8 },
+            { name: 'reduced-motion', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, hardwareConcurrency: 8, deviceMemory: 8, reducedMotion: 'reduce' },
             { name: 'large-monitor', viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 1.5, hardwareConcurrency: 8, deviceMemory: 8 },
           ];
 
@@ -128,6 +129,7 @@ jobs:
                 deviceScaleFactor: scenario.deviceScaleFactor,
                 isMobile: Boolean(scenario.isMobile),
                 hasTouch: Boolean(scenario.hasTouch),
+                reducedMotion: scenario.reducedMotion || 'no-preference',
                 userAgent,
               });
               await context.addInitScript((hardware) => {
@@ -184,6 +186,12 @@ jobs:
                 return {
                   title: document.title,
                   viewport: { width: window.innerWidth, height: window.innerHeight },
+                  documentSize: {
+                    width: document.documentElement.scrollWidth,
+                    height: document.documentElement.scrollHeight,
+                    clientWidth: document.documentElement.clientWidth,
+                    clientHeight: document.documentElement.clientHeight,
+                  },
                   dpr: window.__ENTANGLED_RENDER_SCALE__ || window.devicePixelRatio,
                   canvas: canvas ? {
                     width: canvas.width,
@@ -239,6 +247,8 @@ jobs:
                   'optimized renderer must draw visible artwork, not only a black canvas');
               }
 
+              assert.ok(state.documentSize.width <= state.documentSize.clientWidth + 1, `${scenario.name}: page should not introduce horizontal overflow`);
+              assert.ok(state.documentSize.height <= state.documentSize.clientHeight + 1, `${scenario.name}: page should not introduce vertical overflow`);
               assert.ok(state.canvas, `${scenario.name}: WebGL canvas must exist; noWebGLFallback=${state.noWebGLFallback}, rendererLoadError=${state.rendererLoadError}, pageErrors=${JSON.stringify(pageErrors)}`);
               assert.equal(state.noWebGLFallback, false, `${scenario.name}: renderer fell back; rendererLoadError=${state.rendererLoadError}, pageErrors=${JSON.stringify(pageErrors)}`);
               assert.ok(state.canvas.width > 0 && state.canvas.height > 0, `${scenario.name}: canvas resolution must be positive`);
@@ -311,6 +321,29 @@ jobs:
             assert.deepEqual(heavyRuntimeRequests, [], 'performance governor and renderer dependencies must not load if WebGL APIs are absent');
             assert.deepEqual(fallbackErrors, [], 'no-WebGL fallback path should not throw JavaScript errors');
             await fallbackContext.close();
+
+            // JavaScript-disabled browsers should still see the CSS fallback and
+            // the portfolio links instead of a completely empty artwork area.
+            const noJsContext = await browser.newContext({
+              viewport: { width: 800, height: 600 },
+              javaScriptEnabled: false,
+            });
+            const noJsPage = await noJsContext.newPage();
+            const noJsResponse = await noJsPage.goto(process.env.BASE_URL, {
+              waitUntil: 'domcontentloaded',
+              timeout: 45000,
+            });
+            assert.equal(noJsResponse?.status(), 200, 'JavaScript-disabled page must return HTTP 200');
+            const noJsState = await noJsPage.locator('.fallback').evaluate((element) => ({
+              display: getComputedStyle(element).display,
+              canvasCount: document.querySelectorAll('canvas#scene').length,
+              links: [...document.querySelectorAll('.links a')].map((a) => a.textContent.trim()),
+            }));
+            console.log('NO_JAVASCRIPT_FALLBACK', JSON.stringify(noJsState, null, 2));
+            assert.equal(noJsState.display, 'grid', 'CSS fallback should be visible without JavaScript');
+            assert.equal(noJsState.canvasCount, 0, 'renderer should not initialize without JavaScript');
+            assert.deepEqual(noJsState.links, ['ArtStation', 'itch.io', 'GitHub']);
+            await noJsContext.close();
 
             console.log('ALL_DEVICE_SMOKE_TESTS_PASSED', JSON.stringify(reports, null, 2));
           } finally {
