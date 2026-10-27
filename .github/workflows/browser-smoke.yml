@@ -192,6 +192,8 @@ jobs:
                   profile: profile ? {
                     build: profile.build,
                     particleCount: profile.particleCount,
+                    hardwareClass: profile.hardwareClass,
+                    lowResource: profile.lowResource,
                     maxDevicePixelRatio: profile.maxDevicePixelRatio,
                     renderPixelBudget: profile.renderPixelBudget,
                     renderScale: profile.renderScale,
