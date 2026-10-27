@@ -85,6 +85,11 @@ canvas#scene {
 }
 
 .links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding-inline: 3px;
   color: var(--color-muted);
   font-size: 11px;
   letter-spacing: 0.015em;

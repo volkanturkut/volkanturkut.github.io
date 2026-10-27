@@ -223,6 +223,8 @@ jobs:
                     text: a.textContent.trim(),
                     href: a.href,
                   })),
+                  linkTargetHeights: [...document.querySelectorAll('.links a')]
+                    .map((a) => a.getBoundingClientRect().height),
                 };
               });
               const afterFrames = state.profile?.frameCount ?? 0;
@@ -279,6 +281,8 @@ jobs:
                 'https://volkanturkut.itch.io/',
                 'https://github.com/volkanturkut',
               ]);
+              assert.ok(state.linkTargetHeights.every((height) => height >= 24),
+                `${scenario.name}: footer links must have at least 24 CSS-pixel touch targets, got ${JSON.stringify(state.linkTargetHeights)}`);
               assert.deepEqual(pageErrors, [], `${scenario.name}: no uncaught JavaScript errors`);
               assert.deepEqual(failedRuntimeRequests, [], `${scenario.name}: runtime assets must load`);
 
@@ -371,8 +375,10 @@ jobs:
                 profileStopped: window.__ENTANGLED_PERF__?.stopped === true,
               };
             });
-            await lossPage.waitForFunction(() =>
-              document.documentElement.classList.contains('no-webgl'));
+            // Fallback is applied synchronously inside the context-loss listener.
+            // Avoid RAF-based polling here because the fallback intentionally stops RAF callbacks.
+            assert.equal(await lossPage.evaluate(() =>
+              document.documentElement.classList.contains('no-webgl')), true);
             assert.equal(contextLossState.prevented, true, 'context-loss event should be prevented while fallback is shown');
             assert.equal(contextLossState.stopped, true, 'fallback must signal the renderer loop to stop');
             assert.equal(contextLossState.profileStopped, true, 'performance governor must report stopped state');

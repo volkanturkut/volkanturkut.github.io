@@ -7,7 +7,7 @@ A minimal, free-to-host personal website using a performance-adapted version of 
 The page uses native browser technologies: semantic HTML, a separate responsive stylesheet, and native ECMAScript modules. It does not require a framework, package manager, bundler, runtime CDN, analytics, or paid service.
 
 - `index.html` — semantic document shell, metadata, and accessible footer.
-- `styles.css` — responsive layout, safe-area spacing, keyboard focus styling, and the lightweight no-WebGL visual.
+- `styles.css` — responsive layout, safe-area spacing, keyboard focus styling, mobile-friendly footer tap targets, and the lightweight no-WebGL visual.
 - `app.js` — WebGL capability checks, lazy runtime loading, canvas accessibility, context-loss handling, and a loading watchdog.
 - `performance.js` — device-aware particle and resolution limits, animation scheduling, and reduced-motion support.
 - `bundle.min.js` — performance-tuned derivative of the original Entangled generator.

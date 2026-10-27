@@ -1,0 +1,56 @@
+name: Verify published GitHub Pages site
+
+on:
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch and verify live page and runtime assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://volkanturkut.github.io"
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+
+          fetch_asset() {
+            local path="$1"
+            local output="$2"
+            curl --fail --location --silent --show-error \
+              --retry 5 --retry-delay 3 --retry-all-errors --max-time 30 \
+              "$base/$path" --output "$tmp/$output"
+          }
+
+          fetch_asset "" "index.html"
+          for asset in styles.css app.js performance.js three.r157.min.js fxhash.min.js bundle.min.js; do
+            fetch_asset "$asset" "$asset"
+          done
+
+          grep -Fq '<title>Entangled — Volkan Turkut</title>' "$tmp/index.html"
+          grep -Fq 'href="./styles.css"' "$tmp/index.html"
+          grep -Fq 'src="./app.js"' "$tmp/index.html"
+          grep -Fq 'https://volkanturkut.artstation.com/' "$tmp/index.html"
+          grep -Fq 'https://volkanturkut.itch.io/' "$tmp/index.html"
+          grep -Fq 'https://github.com/volkanturkut' "$tmp/index.html"
+          grep -Fq 'The renderer did not begin rendering within 30 seconds.' "$tmp/app.js"
+          grep -Fq 'window.__ENTANGLED_STOP_RENDERING__ = true;' "$tmp/app.js"
+          grep -Fq 'build: "low-end-r12"' "$tmp/performance.js"
+          grep -Fq 'min-height: 24px' "$tmp/styles.css"
+
+          archive_status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' "$base/original-source/versions/v0-original-entangled/index.html")"
+          if [[ "$archive_status" != "404" ]]; then
+            echo "::error::Pristine upstream reference files should not be published (got HTTP $archive_status)"
+            exit 1
+          fi
+
+          echo "PASS live GitHub Pages page, footer links, runtime assets, performance marker, and source archive exclusion"

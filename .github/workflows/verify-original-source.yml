@@ -104,6 +104,8 @@ jobs:
 
           assert.ok(!html.includes('favicon.svg'), 'custom non-original favicon should not be referenced');
           assert.ok(stylesheet.includes('html.no-webgl .fallback'), 'a low-cost fallback visual must be available without WebGL');
+          assert.ok(stylesheet.includes('min-height: 24px'), 'footer links should have mobile-friendly 24px touch target height');
+          assert.ok(stylesheet.includes('display: inline-flex'), 'footer touch target sizing must apply to inline anchors');
           assert.ok(appSource.includes('WebGLRenderingContext'), 'the WebGL capability check must remain enabled');
           assert.ok(performanceSource.includes('__ENTANGLED_PERF__'), 'performance profile should be visible for automated smoke checks');
           assert.ok(performanceSource.includes('build: "low-end-r12"'), 'deployment profile marker should be present for live browser verification');
