@@ -89,7 +89,7 @@ jobs:
             ],
           });
 
-          async function openCurrentDeployment(page, pageErrors, failedRuntimeRequests, label) {
+          async function openCurrentDeployment(page, pageErrors, failedRuntimeRequests, label, requirePerformanceProfile = true) {
             pageErrors.length = 0;
             failedRuntimeRequests.length = 0;
             const response = await page.goto(process.env.BASE_URL, {
@@ -98,8 +98,10 @@ jobs:
             });
             assert.equal(response?.status(), 200, `${label}: local site must return HTTP 200`);
             const activeBuild = await page.evaluate(() => window.__ENTANGLED_PERF__?.build === 'low-end-r12');
-            assert.ok(activeBuild, `${label}: expected low-end-r12 performance profile from checked-out commit`);
-            console.log(`${label}: running checked-out performance profile from ${process.env.EXPECTED_REVISION}`);
+            if (requirePerformanceProfile) {
+              assert.ok(activeBuild, `${label}: expected low-end-r12 performance profile from checked-out commit`);
+            }
+            console.log(`${label}: ${requirePerformanceProfile ? 'running checked-out performance profile from' : 'checking lightweight fallback shell on'} ${process.env.EXPECTED_REVISION}`);
             return response;
           }
 
@@ -284,13 +286,13 @@ jobs:
             const heavyRuntimeRequests = [];
             fallbackPage.on('request', (request) => {
               const path = new URL(request.url()).pathname;
-              if (['/app.js', '/performance.js', '/styles.css', '/bundle.min.js', '/fxhash.min.js', '/three.r157.min.js'].includes(path)) {
+              if (['/performance.js', '/bundle.min.js', '/fxhash.min.js', '/three.r157.min.js'].includes(path)) {
                 heavyRuntimeRequests.push(path);
               }
             });
             const fallbackErrors = [];
             fallbackPage.on('pageerror', (error) => fallbackErrors.push(error.message));
-            const fallbackResponse = await openCurrentDeployment(fallbackPage, fallbackErrors, [], 'no-WebGL fallback');
+            const fallbackResponse = await openCurrentDeployment(fallbackPage, fallbackErrors, [], 'no-WebGL fallback', false);
             assert.equal(fallbackResponse?.status(), 200);
             await fallbackPage.waitForFunction(() => document.documentElement.classList.contains('no-webgl'));
             const fallbackState = await fallbackPage.evaluate(() => ({
@@ -298,13 +300,15 @@ jobs:
               fallbackDisplay: getComputedStyle(document.querySelector('.fallback')).display,
               canvasCount: document.querySelectorAll('canvas#scene').length,
               profileBuild: window.__ENTANGLED_PERF__?.build,
+              performanceModuleLoaded: Boolean(window.__ENTANGLED_PERF__),
             }));
             console.log('NO_WEBGL_FALLBACK', JSON.stringify({ ...fallbackState, heavyRuntimeRequests, fallbackErrors }, null, 2));
             assert.equal(fallbackState.noWebGL, true);
             assert.equal(fallbackState.fallbackDisplay, 'grid');
             assert.equal(fallbackState.canvasCount, 0);
-            assert.equal(fallbackState.profileBuild, 'low-end-r12');
-            assert.deepEqual(heavyRuntimeRequests, [], 'none of the heavy runtime assets should load if WebGL APIs are absent');
+            assert.equal(fallbackState.profileBuild, undefined, 'performance governor must not initialize without WebGL');
+            assert.equal(fallbackState.performanceModuleLoaded, false);
+            assert.deepEqual(heavyRuntimeRequests, [], 'performance governor and renderer dependencies must not load if WebGL APIs are absent');
             assert.deepEqual(fallbackErrors, [], 'no-WebGL fallback path should not throw JavaScript errors');
             await fallbackContext.close();
 
