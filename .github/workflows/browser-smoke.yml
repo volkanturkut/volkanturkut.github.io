@@ -127,12 +127,12 @@ jobs:
 
               const response = await openCurrentDeployment(page, pageErrors, failedRuntimeRequests, scenario.name);
               assert.equal(response?.status(), 200, `${scenario.name}: home page must return HTTP 200`);
-              await page.waitForSelector('canvas#scene', { state: 'attached', timeout: 45000 });
               await page.waitForFunction(() => {
                 const canvas = document.querySelector('canvas#scene');
-                return canvas && canvas.width > 0 && canvas.height > 0;
+                return (canvas && canvas.width > 0 && canvas.height > 0) ||
+                  document.documentElement.classList.contains('no-webgl');
               }, null, { timeout: 45000 });
-              await page.waitForTimeout(2200);
+              await page.waitForTimeout(1500);
 
               const beforeFrames = await page.evaluate(() => window.__ENTANGLED_PERF__?.frameCount ?? 0);
               await page.waitForTimeout(1200);
@@ -164,6 +164,7 @@ jobs:
                   } : null,
                   windowsStorage: localStorage.getItem('windows'),
                   noWebGLFallback: document.documentElement.classList.contains('no-webgl'),
+                  rendererLoadError: window.__ENTANGLED_LOAD_ERROR__ || null,
                   links: [...document.querySelectorAll('.links a')].map((a) => ({
                     text: a.textContent.trim(),
                     href: a.href,
@@ -183,7 +184,8 @@ jobs:
               reports.push(runtimeState);
               console.log('DEVICE_SMOKE', JSON.stringify(runtimeState, null, 2));
 
-              assert.ok(state.canvas, `${scenario.name}: WebGL canvas must exist`);
+              assert.ok(state.canvas, `${scenario.name}: WebGL canvas must exist; noWebGLFallback=${state.noWebGLFallback}, rendererLoadError=${state.rendererLoadError}, pageErrors=${JSON.stringify(pageErrors)}`);
+              assert.equal(state.noWebGLFallback, false, `${scenario.name}: renderer fell back; rendererLoadError=${state.rendererLoadError}, pageErrors=${JSON.stringify(pageErrors)}`);
               assert.ok(state.canvas.width > 0 && state.canvas.height > 0, `${scenario.name}: canvas resolution must be positive`);
               assert.ok(state.profile, `${scenario.name}: performance profile must exist`);
               assert.equal(state.profile.build, 'low-end-r1');
