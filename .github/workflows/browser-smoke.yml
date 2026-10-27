@@ -260,6 +260,54 @@ jobs:
             assert.deepEqual(fallbackErrors, [], 'no-WebGL fallback path should not throw JavaScript errors');
             await fallbackContext.close();
 
+            // Render the untouched upstream baseline from the preserved archive. This
+            // is important because a canvas existing alone does not prove visible artwork.
+            const baselineContext = await browser.newContext({
+              viewport: { width: 1280, height: 800 },
+              deviceScaleFactor: 1,
+            });
+            await baselineContext.addInitScript(() => {
+              try { localStorage.clear(); } catch (_) {}
+            });
+            const baselinePage = await baselineContext.newPage();
+            const baselineErrors = [];
+            const baselineConsoleErrors = [];
+            baselinePage.on('pageerror', (error) => baselineErrors.push(error.message));
+            baselinePage.on('console', (message) => {
+              if (message.type() === 'error') baselineConsoleErrors.push(message.text());
+            });
+            const baselineUrl = `${process.env.BASE_URL}/original-source/versions/v0-original-entangled/index.html?disableWindowing=true`;
+            const baselineResponse = await baselinePage.goto(baselineUrl, {
+              waitUntil: 'domcontentloaded',
+              timeout: 45000,
+            });
+            assert.equal(baselineResponse?.status(), 200, 'pristine source page must return HTTP 200');
+            await baselinePage.waitForSelector('canvas#scene', { state: 'attached', timeout: 45000 });
+            await baselinePage.waitForTimeout(2500);
+            const baselineState = await baselinePage.evaluate(() => {
+              const canvas = document.querySelector('canvas#scene');
+              return {
+                title: document.title,
+                canvas: canvas ? {
+                  width: canvas.width,
+                  height: canvas.height,
+                  cssWidth: canvas.getBoundingClientRect().width,
+                  cssHeight: canvas.getBoundingClientRect().height,
+                } : null,
+                bodyBackground: getComputedStyle(document.body).backgroundColor,
+                pixelRatio: window.devicePixelRatio,
+              };
+            });
+            await baselinePage.screenshot({ path: '/tmp/entangled-pristine-baseline.png', fullPage: true });
+            console.log('PRISTINE_UPSTREAM_BASELINE', JSON.stringify({
+              ...baselineState,
+              baselineErrors,
+              baselineConsoleErrors,
+            }, null, 2));
+            assert.ok(baselineState.canvas, 'pristine upstream renderer must create a canvas');
+            assert.ok(baselineState.canvas.width > 0 && baselineState.canvas.height > 0);
+            await baselineContext.close();
+
             console.log('ALL_DEVICE_SMOKE_TESTS_PASSED', JSON.stringify(reports, null, 2));
           } finally {
             await browser.close();
@@ -270,6 +318,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: entangled-desktop-render
-          path: /tmp/entangled-desktop.png
+          name: entangled-render-comparison
+          path: |
+            /tmp/entangled-desktop.png
+            /tmp/entangled-pristine-baseline.png
           if-no-files-found: ignore
