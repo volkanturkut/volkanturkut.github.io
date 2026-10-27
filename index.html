@@ -90,11 +90,17 @@ canvas {
 <!-- Lightweight compatibility profile: cap GPU pixel ratio and the render loop. -->
 <script>
 (() => {
-  const nativeDpr = Math.max(1, Number(window.devicePixelRatio) || 1);
+  const nativeDpr = Number(window.devicePixelRatio) || 1;
+  const maxRenderPixels = 1500000;
+  const getRenderScale = () => Math.min(
+    1.25,
+    nativeDpr,
+    Math.sqrt(maxRenderPixels / Math.max(1, window.innerWidth * window.innerHeight))
+  );
   try {
     Object.defineProperty(window, "devicePixelRatio", {
       configurable: true,
-      get: () => Math.min(nativeDpr, 1.25)
+      get: getRenderScale
     });
   } catch (_) {}
 
@@ -115,7 +121,9 @@ canvas {
   window.__ENTANGLED_PERF__ = Object.freeze({
     particleCount: 262144,
     maxDevicePixelRatio: 1.25,
+    renderPixelBudget: maxRenderPixels,
     targetFramesPerSecond: 30,
+    get renderScale() { return getRenderScale(); },
     multiWindow: false,
     pointerControls: false,
     keyboardShortcuts: false,
