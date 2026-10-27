@@ -1,7 +1,3 @@
-import { initializePerformanceProfile } from "./performance.js";
-
-initializePerformanceProfile();
-
 const root = document.documentElement;
 const RENDERER_TIMEOUT_MS = 30_000;
 
@@ -70,6 +66,8 @@ function observeRendererCanvas(timeoutId) {
 }
 
 async function startArtwork() {
+  // Keep unsupported browsers lightweight: don't install the frame-rate
+  // governor or download any rendering dependencies when WebGL is absent.
   if (!hasWebGLApis()) {
     showFallback();
     return;
@@ -86,7 +84,10 @@ async function startArtwork() {
   const canvasObserver = observeRendererCanvas(timeoutId);
 
   try {
-    // Expensive local runtimes are only loaded when WebGL APIs are present.
+    // Install hardware-aware limits before initializing the renderer. This
+    // module is intentionally lazy so the no-WebGL shell does minimal work.
+    const { initializePerformanceProfile } = await import("./performance.js");
+    initializePerformanceProfile();
     await import("./three.r157.min.js");
     await loadClassicScript("./fxhash.min.js");
     await import("./bundle.min.js");
