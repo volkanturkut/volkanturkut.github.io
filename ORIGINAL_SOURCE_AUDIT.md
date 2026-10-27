@@ -23,7 +23,7 @@ The eight original files are preserved for comparison and study; they are exclud
 
 The active root `bundle.min.js` is intentionally modified. It is no longer a 100%-identical copy of the original runtime:
 
-1. **GPU workload:** `ut=15e5` (1,500,000) changed to `ut=262144` (262,144), reducing this configured particle workload by approximately **82.5%**.
+1. **GPU workload:** `ut=15e5` (1,500,000) changed to `ut=65536` (65,536), reducing this configured particle workload by approximately **95.6%**.
 2. **Window features:** multi-window management is hard-disabled; its manager is not initialized and the screen-permission/window synchronization flow is bypassed.
 3. **Input controls:** mouse, touch, drag, and wheel listeners used by the original control class are removed.
 4. **Keyboard actions:** the original Space pause, D debug, and S screenshot-save key handler is removed.
@@ -36,14 +36,14 @@ The active root `bundle.min.js` is intentionally modified. It is no longer a 100
 ## Automated verification
 
 - `.github/workflows/verify-original-source.yml` checks all eight upstream archive hashes, required active-runtime tuning, footer links, local dependencies, removal of obsolete recreation files, and exclusion of reference material from Pages.
-- `.github/workflows/browser-smoke.yml` runs a Chromium/WebGL smoke test after Pages deployment for desktop, phone, small Android-sized, tablet, and large-monitor viewports. It measures whether the effective pixel ratio/render pixel budget and frame throttle are respected; checks JavaScript exceptions, runtime asset errors, and that multi-window storage is not initialized; and uploads a desktop screenshot.
+- `.github/workflows/browser-smoke.yml` runs a Chromium/WebGL smoke test on the checked-out build for desktop, phone, small Android-sized, tablet, and large-monitor viewports. It measures whether the effective pixel ratio/render pixel budget and frame throttle are respected; checks JavaScript exceptions, runtime asset errors, that multi-window storage is not initialized, and that a screenshot contains visible artwork pixels; and uploads a desktop screenshot. The test deliberately avoids running the original 1.5-million-particle renderer as a comparison fixture because that heavy baseline can dominate a low-resource runner.
 - GitHub Pages builds must still pass before the browser smoke workflow is triggered. The workflow's latest result is available in Actions.
 
 ## Percentage interpretation
 
 - **Archived original source identity:** 8/8 files exact (100%).
 - **Active runtime identity:** intentionally modified to disable features and reduce workload; therefore **not 100% identical** to the original bundle.
-- **Visual similarity:** the renderer logic and palette source are preserved, but the reduced particle budget and disabled interaction/window system may change some details. Pixel-identical parity is not the goal after this performance pass.
+- **Visual similarity:** the renderer logic and palette source are preserved, but the further-reduced particle budget and disabled interaction/window system may change some details. Pixel-identical parity is not the goal after this performance pass.
 - **Hardware guarantee:** no static test can guarantee all devices hit 30 FPS. The design instead caps work and provides a no-WebGL fallback; the device matrix tests representative browser viewports, not every physical hardware/GPU combination.
 
 ## Third-party rights
