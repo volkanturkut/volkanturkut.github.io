@@ -28,7 +28,7 @@ Compared against [fire17/entangled-grail/versions/v0-original-entangled](https:/
 
 - The site's root `index.html` is intentionally customized: portfolio metadata, favicon, responsive footer, and the ArtStation / itch.io / GitHub links are additions.
 - The original renderer is active, but a customized page shell and differing browser, viewport, GPU, or WebGL behavior mean pixel-identical rendering cannot be inferred from source hashes alone.
-- The legacy recreation modules still exist in the repository but are not referenced by the current root `index.html`.
+- The previous custom recreation modules were removed, leaving the original runtime files and the preserved reference source.
 - The preserved upstream bundle's redistribution rights are not independently established by this comparison. The upstream notice says all rights remain with Bjørn Staal and asks users to confirm VERTEX terms before public redistribution.
 
 ## What the percentage means
