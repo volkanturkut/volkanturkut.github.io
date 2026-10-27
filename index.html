@@ -101,12 +101,14 @@ canvas {
   const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
   const targetFrameMs = 1000 / 30;
   let lastFrame = 0;
+  let renderedFrameCount = 0;
   window.requestAnimationFrame = (callback) => nativeRequestAnimationFrame((timestamp) => {
     if (timestamp - lastFrame < targetFrameMs) {
       window.requestAnimationFrame(callback);
       return;
     }
     lastFrame = timestamp;
+    renderedFrameCount += 1;
     callback(timestamp);
   });
 
@@ -116,7 +118,8 @@ canvas {
     targetFramesPerSecond: 30,
     multiWindow: false,
     pointerControls: false,
-    keyboardShortcuts: false
+    keyboardShortcuts: false,
+    get frameCount() { return renderedFrameCount; }
   });
 })();
 </script>
