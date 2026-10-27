@@ -6,7 +6,7 @@ A minimal, free-to-host personal website using a performance-adapted version of 
 
 The original renderer remains the basis of the visual, but the active `bundle.min.js` has intentional changes for a lightweight single-window portfolio:
 
-- Particle workload reduced from 1,500,000 to 262,144 particles (about 82.5% fewer).
+- Particle workload reduced from 1,500,000 to 65,536 particles (about 95.6% fewer).
 - WebGL pixel ratio capped at 1.25, with an adaptive render area budget of about 1.5 million pixels on large displays.
 - Render loop limited to 30 FPS normally and 15 FPS when the operating system requests reduced motion.
 - Multi-window and multi-display synchronization disabled.
@@ -18,7 +18,7 @@ The preserved upstream source bundle and support files remain untouched under [o
 
 ## Compatibility and performance checks
 
-The page is designed for modern WebGL-capable browsers on desktop and mobile. Automated GitHub Actions tests cover desktop, phone, small Android-sized, tablet, and large-monitor viewport profiles. The browser tests check asset loading, JavaScript exceptions, canvas initialization, render pixel budgeting, window-sharing storage, footer links, and the render-loop cap.
+The page is designed for modern WebGL-capable browsers on desktop and mobile. Automated GitHub Actions tests cover desktop, phone, small Android-sized, tablet, and large-monitor viewport profiles. The browser tests check asset loading, JavaScript exceptions, actual visible artwork pixels, render pixel budgeting, window-sharing storage, footer links, and the render-loop cap.
 
 No website can guarantee a perfect frame rate on every GPU, browser, thermal state, accessibility setting, or power-saving mode. WebGL-disabled devices show the CSS fallback instead of requiring the renderer to run.
 
