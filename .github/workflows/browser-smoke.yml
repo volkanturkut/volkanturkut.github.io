@@ -79,7 +79,7 @@ jobs:
             await page.waitForFunction(() => {
               const canvas = document.querySelector('canvas#scene');
               return canvas && canvas.width > 0 && canvas.height > 0;
-            }, { timeout: 45000 });
+            }, null, { timeout: 45000 });
             await page.waitForTimeout(3000);
 
             const state = await page.evaluate(() => {
@@ -100,6 +100,8 @@ jobs:
                 links,
               };
             });
+
+            await page.screenshot({ path: '/tmp/entangled-page.png', fullPage: true });
 
             console.log('LIVE_RENDER_STATE', JSON.stringify({
               expectedRevision: process.env.EXPECTED_REVISION,
