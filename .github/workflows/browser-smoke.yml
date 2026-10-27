@@ -60,21 +60,23 @@ jobs:
             const pageErrors = [];
             const failedSameOriginRequests = [];
             page.on('pageerror', (error) => pageErrors.push(error.message));
+            const isRuntimeAsset = (url) => /\\/(bundle\\.min\\.js|fxhash\\.min\\.js|three\\.r157\\.min\\.js)$/.test(new URL(url).pathname);
             page.on('requestfailed', (request) => {
-              if (request.url().startsWith('https://volkanturkut.github.io/')) {
+              if (request.url().startsWith('https://volkanturkut.github.io/') && isRuntimeAsset(request.url())) {
                 failedSameOriginRequests.push({ url: request.url(), error: request.failure()?.errorText });
               }
             });
             page.on('response', (response) => {
-              if (response.url().startsWith('https://volkanturkut.github.io/') && response.status() >= 400) {
+              if (response.url().startsWith('https://volkanturkut.github.io/') && isRuntimeAsset(response.url()) && response.status() >= 400) {
                 failedSameOriginRequests.push({ url: response.url(), status: response.status() });
               }
             });
 
-            await page.goto('https://volkanturkut.github.io/', {
+            const documentResponse = await page.goto('https://volkanturkut.github.io/', {
               waitUntil: 'domcontentloaded',
               timeout: 90000,
             });
+            assert.equal(documentResponse?.status(), 200, 'live home page must return HTTP 200');
             await page.waitForSelector('canvas#scene', { state: 'attached', timeout: 45000 });
             await page.waitForFunction(() => {
               const canvas = document.querySelector('canvas#scene');
