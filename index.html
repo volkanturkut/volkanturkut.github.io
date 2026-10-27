@@ -2,38 +2,115 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Volkan Turkut — art, games, and code.">
-<title>Volkan Turkut</title>
-<link rel="icon" type="image/svg+xml" href="./favicon.svg">
-<style>
-:root{color-scheme:dark;--bg:#000;--fg:#e8e9e6;--muted:#858681}
-*{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0}
-body{overflow:hidden;background:#000;color:var(--fg);font-family:Inter,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-canvas{position:absolute;inset:0;display:block}
-.footer{position:fixed;z-index:20;inset-inline:0;bottom:clamp(25px,4.6vh,46px);display:flex;flex-direction:column;align-items:center;gap:13px;padding-inline:20px;text-align:center;pointer-events:none}
-.creator{margin:0;color:rgba(236,237,233,.9);font-size:10px;font-weight:500;letter-spacing:.19em;line-height:1.4;text-transform:uppercase}
-.links{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px 21px;margin:0;padding:0;list-style:none;pointer-events:auto}
-.links a{color:var(--muted);font-size:11px;letter-spacing:.015em;text-decoration:none;transition:color 180ms ease;outline-offset:5px}
-.links a:hover,.links a:focus-visible{color:var(--fg)}
-.links a:focus-visible{outline:1px solid rgba(236,237,233,.6)}
-@media(max-width:560px){.footer{bottom:max(22px,env(safe-area-inset-bottom));gap:12px}.links{gap:10px 17px}.links a{font-size:10px}}
-@media(prefers-reduced-motion:reduce){.links a{transition:none}}
+<title>Entangled — Volkan Turkut</title>
+<style type="text/css">
+body {
+  font: 12px "Courier New";
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  color: #e8e9e6;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.footer {
+  position: fixed;
+  z-index: 20;
+  inset-inline: 0;
+  bottom: clamp(25px, 4.6vh, 46px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  padding-inline: 20px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.creator {
+  margin: 0;
+  color: rgba(236, 237, 233, .9);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .19em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 9px 21px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: auto;
+}
+
+.links a {
+  color: #858681;
+  font-size: 11px;
+  letter-spacing: .015em;
+  text-decoration: none;
+  transition: color 180ms ease;
+  outline-offset: 5px;
+}
+
+.links a:hover,
+.links a:focus-visible {
+  color: #e8e9e6;
+}
+
+.links a:focus-visible {
+  outline: 1px solid rgba(236, 237, 233, .6);
+}
+
+@media (max-width: 560px) {
+  .footer {
+    bottom: max(22px, env(safe-area-inset-bottom));
+    gap: 12px;
+  }
+
+  .links {
+    gap: 10px 17px;
+  }
+
+  .links a {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .links a {
+    transition: none;
+  }
+}
 </style>
-<script src="./fxhash.min.js"></script>
+
 <script type="module" src="./three.r157.min.js"></script>
+<!-- Original Entangled source has its optional Tweakpane import commented out. -->
+<script type="text/javascript" src="./fxhash.min.js"></script>
 </head>
 <body>
 <script type="module" src="./bundle.min.js"></script>
 <footer class="footer">
-<p class="creator">Volkan Turkut</p>
-<nav aria-label="Social links"><ul class="links">
-<li><a href="https://volkanturkut.artstation.com/" target="_blank" rel="noopener noreferrer">ArtStation</a></li>
-<li><a href="https://volkanturkut.itch.io/" target="_blank" rel="noopener noreferrer">itch.io</a></li>
-<li><a href="https://github.com/volkanturkut" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-</ul></nav>
+  <p class="creator">Volkan Turkut</p>
+  <nav aria-label="Social links">
+    <ul class="links">
+      <li><a href="https://volkanturkut.artstation.com/" target="_blank" rel="noopener noreferrer">ArtStation</a></li>
+      <li><a href="https://volkanturkut.itch.io/" target="_blank" rel="noopener noreferrer">itch.io</a></li>
+      <li><a href="https://github.com/volkanturkut" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+    </ul>
+  </nav>
 </footer>
 </body>
 </html>
