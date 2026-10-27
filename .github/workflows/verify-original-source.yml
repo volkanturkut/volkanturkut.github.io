@@ -105,8 +105,6 @@ jobs:
           assert.ok(html.includes('const maxDevicePixelRatio = lowResource ? 1.0 : 1.25'), 'low-resource devices must use a lower pixel-ratio cap');
           assert.ok(html.includes('window.__ENTANGLED_PERF_PARTICLES__ = particleCount'), 'adaptive particle budget must be available before renderer import');
           assert.ok(html.includes('"__ENTANGLED_RENDER_SCALE__"'), 'internal DPR scale should not override the browser native devicePixelRatio');
-          assert.ok(optimizedBundle.includes('Tn=Je.__ENTANGLED_RENDER_SCALE__||(Je.devicePixelRatio?Je.devicePixelRatio:1)'), 'renderer must use the capped internal DPR scale');
-          assert.ok(optimizedBundle.includes('function na(){Tn=Je.__ENTANGLED_RENDER_SCALE__||(Je.devicePixelRatio?Je.devicePixelRatio:1);Cn&&Cn.setPixelRatio(Tn)'), 'renderer DPR must recalculate on resize');
           assert.ok(html.includes('const maxRenderPixels = 1000000;'), 'render-pixel budget must stay capped at one megapixel');
           assert.ok(html.includes('renderPixelBudget: maxRenderPixels'), 'render-pixel budget should remain enabled');
           assert.ok(html.includes('await import("./bundle.min.js")'), 'bundle should load only through the WebGL-aware module loader');
@@ -118,6 +116,8 @@ jobs:
           assert.ok(html.includes('pointerControls: false'), 'pointer/touch interaction should remain disabled');
           assert.ok(html.includes('keyboardShortcuts: false'), 'keyboard shortcuts should remain disabled');
           const optimizedBundle = readFileSync('bundle.min.js', 'utf8');
+          assert.ok(optimizedBundle.includes('Tn=Je.__ENTANGLED_RENDER_SCALE__||(Je.devicePixelRatio?Je.devicePixelRatio:1)'), 'renderer must use the capped internal DPR scale');
+          assert.ok(optimizedBundle.includes('function na(){Tn=Je.__ENTANGLED_RENDER_SCALE__||(Je.devicePixelRatio?Je.devicePixelRatio:1);Cn&&Cn.setPixelRatio(Tn)'), 'renderer DPR must recalculate on resize');
           assert.ok(optimizedBundle.includes('Ht=!0,Tt.id=0==V?1:-1,Tt.visibility=0==V?1:0,Tt.visibilityTarget=0==V?1:0'), 'single-window mode must initialize exactly one visible renderer instance');
           assert.ok(optimizedBundle.includes('Tt.resolvedIteration=D.resolved()'), 'single-window instance must receive the current resolved iteration');
           assert.ok(optimizedBundle.includes('$t=1'), 'standalone visual must have a valid single top-window identifier');
