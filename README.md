@@ -2,43 +2,43 @@
 
 A minimal, free-to-host personal website using a performance-adapted version of the original *Entangled* visual renderer.
 
-## Active visual experience
+## Modern source layout
 
-The original renderer remains the basis of the visual, but the active `bundle.min.js` has intentional changes for a lightweight single-window portfolio:
+The page uses native browser technologies: semantic HTML, a separate responsive stylesheet, and native ECMAScript modules. It does not require a framework, package manager, bundler, runtime CDN, analytics, or paid service.
 
-- Particle workload adapts to hardware: 16,384 particles on low-resource devices (about 98.9% fewer than original) and 32,768 on standard devices (about 97.8% fewer).
-- WebGL render scale capped at 1.0 on low-resource devices and 1.25 on standard devices, with a one-megapixel render budget; the cap recalculates on resize without overriding the browser's native devicePixelRatio.
-- Render loop limited to 24 FPS on low-resource devices, 30 FPS on standard devices, and 15 FPS when the operating system requests reduced motion.
-- Multi-window and multi-display synchronization disabled.
-- Mouse, touch, wheel, and keyboard shortcuts removed; the artwork remains an animated visual rather than an interactive tool.
-- If WebGL is unavailable or fails to initialize, a very low-cost CSS fallback illustration is shown.
-- No runtime CDN, external fonts, bundler, paid service, analytics, or third-party UI libraries.
+- `index.html` — semantic document shell, metadata, and accessible footer.
+- `styles.css` — responsive layout, safe-area spacing, keyboard focus styling, and the lightweight no-WebGL visual.
+- `app.js` — WebGL capability checks, lazy runtime loading, canvas accessibility, context-loss handling, and a loading watchdog.
+- `performance.js` — device-aware particle and resolution limits, animation scheduling, and reduced-motion support.
+- `bundle.min.js` — performance-tuned derivative of the original Entangled generator.
+- `fxhash.min.js` and `three.r157.min.js` — local runtime dependencies required by the original visual.
 
-The preserved upstream source bundle and support files remain untouched under [original-source/versions/v0-original-entangled](./original-source/versions/v0-original-entangled). The optimized root bundle is a derivative copy; it is not byte-for-byte identical to the upstream bundle.
+The preserved upstream source files remain unchanged under [original-source/versions/v0-original-entangled](./original-source/versions/v0-original-entangled).
 
-## Compatibility and performance checks
+## Performance profile
 
-The page is designed for modern WebGL-capable browsers on desktop and mobile. Automated GitHub Actions tests cover desktop, phone, small Android-sized, tablet, and large-monitor viewport profiles, including simulated low- and standard-resource hardware profiles. The browser tests check asset loading, JavaScript exceptions, actual visible artwork pixels, render pixel budgeting, window-sharing storage, footer links, and the render-loop cap.
+- Particle workload adapts to device capabilities: 16,384 particles on low-resource devices and 32,768 on standard devices.
+- WebGL render scale is capped at 1.0 on low-resource devices and 1.25 on standard devices, with a one-megapixel render budget.
+- Animation callbacks are capped at 24 FPS on low-resource devices and 30 FPS on standard devices, or 15 FPS when reduced motion is requested.
+- Multi-window synchronization, pointer/touch controls, keyboard shortcuts, and diagnostic feature dumps are disabled.
+- Expensive runtime modules are dynamically imported only when WebGL APIs are present.
+- A lightweight CSS fallback appears if WebGL is unavailable, the renderer fails, the context is lost, or initialization times out.
 
-No website can guarantee a perfect frame rate on every GPU, browser, thermal state, accessibility setting, or power-saving mode. WebGL-disabled devices show the CSS fallback instead of requiring the renderer to run.
+The design prioritizes bounded rendering work rather than claiming a guaranteed FPS on every GPU, browser, thermal state, or power setting. CI exercises desktop, phone-sized, tablet-sized, and large-monitor profiles, but does not replace testing on physical devices.
 
-- [Original source audit](./ORIGINAL_SOURCE_AUDIT.md)
+## Free hosting
+
+This repository is named `volkanturkut.github.io`; the live site is **https://volkanturkut.github.io/**. GitHub Pages serves the static files for free without a build step.
+
+## Checks and provenance
+
+- [Original source and performance audit](./ORIGINAL_SOURCE_AUDIT.md)
 - [Third-party notices](./THIRD_PARTY_NOTICES.md)
 - [Browser smoke workflow](./.github/workflows/browser-smoke.yml)
 - [Source verification workflow](./.github/workflows/verify-original-source.yml)
 
-## Credits and rights
-
-The original artwork and production bundle are © Bjørn Staal (@nonfigurativ), *Entangled*, fxhash VERTEX (2024). All rights remain with the artist. The upstream preservation repository describes its copy as preservation/study material and asks users to confirm VERTEX open-source terms before public redistribution. This personal site does not claim authorship or ownership of the Entangled artwork. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
-
-## Free hosting with GitHub Pages
-
-This repository is named `volkanturkut.github.io`, so the site URL is:
-
-**https://volkanturkut.github.io/**
-
-GitHub Pages publishes the static files from this repository; no build step is needed for the source itself.
+The original artwork and production bundle are © Bjørn Staal (@nonfigurativ), *Entangled*, fxhash VERTEX (2024). All rights remain with the artist; the site does not claim authorship or ownership. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
 
 ## Customize
 
-Edit `index.html` for the footer or performance profile. The tuned renderer is `bundle.min.js`; the pristine source copy is kept separately under `original-source/`.
+Edit `index.html` for page metadata and footer content, `styles.css` for layout, or `performance.js` for hardware budgets. The tuned artwork runtime is `bundle.min.js`; compare it with the pristine source archive before changing rendering behavior.

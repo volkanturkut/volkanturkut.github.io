@@ -1,224 +1,32 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
-<meta name="description" content="Volkan Turkut — art, games, and code.">
-<title>Entangled — Volkan Turkut</title>
-<style>
-:root {
-  color-scheme: dark;
-  --foreground: #e8e9e6;
-  --muted: #858681;
-}
-* { box-sizing: border-box; }
-html, body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-}
-body {
-  overflow: hidden;
-  background: #000;
-  color: var(--foreground);
-  font: 12px "Courier New", monospace;
-  -webkit-font-smoothing: antialiased;
-  overscroll-behavior: none;
-}
-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: block;
-  max-width: 100%;
-  touch-action: none;
-}
-.footer {
-  position: fixed;
-  z-index: 20;
-  inset-inline: 0;
-  bottom: max(clamp(22px, 4.6vh, 46px), env(safe-area-inset-bottom));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 13px;
-  padding-inline: 20px;
-  text-align: center;
-  pointer-events: none;
-}
-.creator {
-  margin: 0;
-  color: rgba(236, 237, 233, .9);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: .19em;
-  line-height: 1.4;
-  text-transform: uppercase;
-}
-.links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 9px 21px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  pointer-events: auto;
-}
-.links a {
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: .015em;
-  text-decoration: none;
-  transition: color 180ms ease;
-  outline-offset: 5px;
-}
-.links a:hover, .links a:focus-visible { color: var(--foreground); }
-.links a:focus-visible { outline: 1px solid rgba(236, 237, 233, .6); }
-@media (max-width: 560px) {
-  .footer { gap: 12px; padding-inline: 16px; }
-  .links { gap: 10px 17px; }
-  .links a { font-size: 10px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .links a { transition: none; }
-}
-.fallback {
-  position: fixed;
-  z-index: 1;
-  inset: 0;
-  display: none;
-  place-items: center;
-  pointer-events: none;
-}
-.fallback-sphere {
-  width: min(70vmin, 420px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 57% 43%, rgba(220, 67, 54, .95) 0 2.2%, transparent 3.1%),
-    radial-gradient(circle at 46% 43%, rgba(50, 180, 105, .05) 0 28%, rgba(80, 205, 135, .42) 29% 30%, transparent 31%),
-    radial-gradient(circle at 50% 50%, transparent 0 41%, rgba(65, 185, 115, .35) 42% 44%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(35, 115, 72, .12), transparent 68%);
-  filter: drop-shadow(0 0 32px rgba(40, 150, 90, .14));
-}
-html.no-webgl .fallback { display: grid; }
-html.no-webgl canvas { display: none !important; }
-</style>
-
-<!-- Lightweight compatibility profile: cap GPU pixel ratio and the render loop. -->
-<script>
-(() => {
-  const getNativeDpr = () => Number(window.devicePixelRatio) || 1;
-  const maxRenderPixels = 1000000;
-  const cores = Number(navigator.hardwareConcurrency) || 0;
-  const memory = Number(navigator.deviceMemory) || 0;
-  const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
-  const lowResource =
-    (cores > 0 && cores <= 4) ||
-    (memory > 0 && memory <= 4) ||
-    (coarsePointer && cores > 0 && cores <= 6) ||
-    (!cores && !memory);
-  const particleCount = lowResource ? 16384 : 32768;
-  const maxDevicePixelRatio = lowResource ? 1.0 : 1.25;
-  window.__ENTANGLED_PERF_PARTICLES__ = particleCount;
-  const getRenderScale = () => Math.min(
-    maxDevicePixelRatio,
-    getNativeDpr(),
-    Math.sqrt(maxRenderPixels / Math.max(1, window.innerWidth * window.innerHeight))
-  );
-  try {
-    Object.defineProperty(window, "__ENTANGLED_RENDER_SCALE__", {
-      configurable: true,
-      get: getRenderScale
-    });
-  } catch (_) {
-    window.__ENTANGLED_RENDER_SCALE__ = getRenderScale();
-  }
-
-  const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const targetFrameRate = reducedMotion ? 15 : lowResource ? 24 : 30;
-  const targetFrameMs = 1000 / targetFrameRate;
-  let lastFrame = 0;
-  let renderedFrameCount = 0;
-  window.requestAnimationFrame = (callback) => nativeRequestAnimationFrame((timestamp) => {
-    if (timestamp - lastFrame < targetFrameMs) {
-      window.requestAnimationFrame(callback);
-      return;
-    }
-    lastFrame = timestamp;
-    renderedFrameCount += 1;
-    callback(timestamp);
-  });
-
-  window.__ENTANGLED_PERF__ = Object.freeze({
-    build: "low-end-r11",
-    particleCount,
-    hardwareClass: lowResource ? "low" : "standard",
-    lowResource,
-    maxDevicePixelRatio,
-    renderPixelBudget: maxRenderPixels,
-    targetFramesPerSecond: targetFrameRate,
-    get renderScale() { return getRenderScale(); },
-    multiWindow: false,
-    pointerControls: false,
-    keyboardShortcuts: false,
-    get frameCount() { return renderedFrameCount; }
-  });
-})();
-</script>
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="description" content="Volkan Turkut — art, games, and code.">
+  <title>Entangled — Volkan Turkut</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
 </head>
 <body>
-<div class="fallback" aria-hidden="true"><div class="fallback-sphere"></div></div>
-<script type="module">
-  const hasWebGL = typeof window.WebGLRenderingContext === "function" ||
-    typeof window.WebGL2RenderingContext === "function";
-  if (!hasWebGL) {
-    document.documentElement.classList.add("no-webgl");
-  } else {
-    try {
-      // Keep the 650 KB Three.js runtime and the generator off devices without WebGL.
-      await import("./three.r157.min.js");
+  <main class="artwork" aria-label="Generative artwork">
+    <div class="fallback" aria-hidden="true">
+      <div class="fallback-sphere"></div>
+    </div>
+  </main>
 
-      await new Promise((resolve, reject) => {
-        const fxhash = document.createElement("script");
-        fxhash.src = "./fxhash.min.js";
-        fxhash.onload = resolve;
-        fxhash.onerror = () => reject(new Error("Could not load fxhash runtime"));
-        document.head.appendChild(fxhash);
-      });
-
-      // Await the renderer so its window.onload initializer is registered before
-      // the browser dispatches load. A fire-and-forget import can miss that event.
-      await import("./bundle.min.js");
-    } catch (error) {
-      window.__ENTANGLED_LOAD_ERROR__ = String(error && (error.stack || error.message) || error);
-      document.documentElement.classList.add("no-webgl");
-    }
-    window.setTimeout(() => {
-      const canvas = document.querySelector("canvas#scene");
-      if (!canvas || canvas.width === 0 || canvas.height === 0) {
-        if (!window.__ENTANGLED_LOAD_ERROR__) {
-          window.__ENTANGLED_LOAD_ERROR__ = "Renderer did not create a visible, non-zero canvas within 12 seconds.";
-        }
-        document.documentElement.classList.add("no-webgl");
-      }
-    }, 12000);
-  }
-</script>
-<footer class="footer">
-  <p class="creator">Volkan Turkut</p>
-  <nav aria-label="Social links">
-    <ul class="links">
-      <li><a href="https://volkanturkut.artstation.com/" target="_blank" rel="noopener noreferrer">ArtStation</a></li>
-      <li><a href="https://volkanturkut.itch.io/" target="_blank" rel="noopener noreferrer">itch.io</a></li>
-      <li><a href="https://github.com/volkanturkut" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-    </ul>
-  </nav>
-</footer>
+  <footer class="footer">
+    <p class="creator">Volkan Turkut</p>
+    <nav aria-label="Social links">
+      <ul class="links">
+        <li><a href="https://volkanturkut.artstation.com/" target="_blank" rel="noopener noreferrer">ArtStation</a></li>
+        <li><a href="https://volkanturkut.itch.io/" target="_blank" rel="noopener noreferrer">itch.io</a></li>
+        <li><a href="https://github.com/volkanturkut" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      </ul>
+    </nav>
+  </footer>
 </body>
 </html>

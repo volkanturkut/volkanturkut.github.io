@@ -31,7 +31,9 @@ The active root `bundle.min.js` is intentionally modified. It is no longer a 100
 6. **Quality governor:** `index.html` uses a private, resize-aware render scale capped at 1.0 on low-resource hardware and 1.25 on standard hardware, and limits the render target to about 1 million pixels. It does not override the browser's native `devicePixelRatio`. This reduces expensive high-DPI and very-large-screen rendering.
 7. **Frame governor:** global animation-frame callbacks are capped at 24 FPS on low-resource hardware, 30 FPS on standard hardware, or 15 FPS for `prefers-reduced-motion`.
 8. **Graceful fallback:** if the browser lacks the WebGL API or the renderer fails to initialize, a simple CSS sphere illustration replaces the WebGL artwork instead of leaving a fully blank page.
-9. **Portfolio shell:** the root HTML retains the creator name and ArtStation, itch.io, and GitHub links. The page remains local/static, with no external font or runtime CDN.
+9. **Modern source structure:** semantic HTML is in `index.html`, responsive styling in `styles.css`, startup and lazy loading in `app.js`, and hardware-aware scheduling/resolution limits in `performance.js`. Native ECMAScript modules run without a framework, build tools, or runtime CDN.
+10. **Runtime resilience:** WebGL is feature-detected; renderer loading has a 30-second watchdog, context-loss fallback, and MutationObserver-based canvas accessibility setup.
+11. **Portfolio shell:** the page retains the creator name and ArtStation, itch.io, and GitHub links.
 
 ## Automated verification
 

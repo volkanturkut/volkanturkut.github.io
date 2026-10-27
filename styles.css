@@ -1,0 +1,151 @@
+:root {
+  color-scheme: dark;
+  --color-background: #000;
+  --color-foreground: #e8e9e6;
+  --color-muted: #858681;
+  --font-ui: "Courier New", Courier, monospace;
+  --footer-gutter: clamp(16px, 4vw, 28px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+.artwork {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+canvas#scene {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: block;
+  max-width: 100%;
+  touch-action: none;
+}
+
+.footer {
+  position: fixed;
+  z-index: 20;
+  inset-inline: 0;
+  bottom: max(clamp(22px, 4.6vh, 46px), env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  padding-inline: var(--footer-gutter);
+  text-align: center;
+  pointer-events: none;
+}
+
+.creator {
+  margin: 0;
+  color: rgb(236 237 233 / 90%);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.19em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 9px 21px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: auto;
+}
+
+.links a {
+  color: var(--color-muted);
+  font-size: 11px;
+  letter-spacing: 0.015em;
+  text-decoration: none;
+  transition: color 180ms ease;
+  outline-offset: 5px;
+}
+
+.links a:hover,
+.links a:focus-visible {
+  color: var(--color-foreground);
+}
+
+.links a:focus-visible {
+  outline: 1px solid rgb(236 237 233 / 60%);
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  pointer-events: none;
+}
+
+.fallback-sphere {
+  width: min(70vmin, 420px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 57% 43%, rgb(220 67 54 / 95%) 0 2.2%, transparent 3.1%),
+    radial-gradient(circle at 46% 43%, rgb(50 180 105 / 5%) 0 28%, rgb(80 205 135 / 42%) 29% 30%, transparent 31%),
+    radial-gradient(circle at 50% 50%, transparent 0 41%, rgb(65 185 115 / 35%) 42% 44%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgb(35 115 72 / 12%), transparent 68%);
+  filter: drop-shadow(0 0 32px rgb(40 150 90 / 14%));
+}
+
+html.no-webgl .fallback {
+  display: grid;
+}
+
+html.no-webgl canvas#scene {
+  display: none !important;
+}
+
+@media (max-width: 560px) {
+  .footer {
+    gap: 12px;
+  }
+
+  .links {
+    gap: 10px 17px;
+  }
+
+  .links a {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .links a {
+    transition: none;
+  }
+}
