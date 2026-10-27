@@ -31,7 +31,7 @@ jobs:
           npm install --no-save playwright
           npx playwright install --with-deps chromium
 
-      - name: Test desktop, phone, tablet, WebGL and performance limits
+      - name: Test desktop, phone, tablet, large screens and WebGL fallback
         shell: bash
         env:
           EXPECTED_REVISION: ${{ github.event.workflow_run.head_sha }}
@@ -54,8 +54,8 @@ jobs:
 
           const scenarios = [
             { name: 'desktop', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 },
-            { name: 'phone', viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
-            { name: 'small-android', viewport: { width: 360, height: 800 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
+            { name: 'iphone-like', viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
+            { name: 'small-android-like', viewport: { width: 360, height: 800 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
             { name: 'tablet', viewport: { width: 768, height: 1024 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
             { name: 'large-monitor', viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 1.5 },
           ];
@@ -133,6 +133,7 @@ jobs:
                     frameCount: profile.frameCount,
                   } : null,
                   windowsStorage: localStorage.getItem('windows'),
+                  noWebGLFallback: document.documentElement.classList.contains('no-webgl'),
                   links: [...document.querySelectorAll('.links a')].map((a) => ({
                     text: a.textContent.trim(),
                     href: a.href,
@@ -154,8 +155,8 @@ jobs:
 
               assert.ok(state.canvas, `${scenario.name}: WebGL canvas must exist`);
               assert.ok(state.canvas.width > 0 && state.canvas.height > 0, `${scenario.name}: canvas resolution must be positive`);
-              assert.ok(state.dpr <= 1.25, `${scenario.name}: DPR must be capped at 1.25, got ${state.dpr}`);
               assert.ok(state.profile, `${scenario.name}: performance profile must exist`);
+              assert.ok(state.dpr > 0 && state.dpr <= 1.25, `${scenario.name}: DPR must be capped at 1.25, got ${state.dpr}`);
               assert.ok(state.canvas.width * state.canvas.height <= state.profile.renderPixelBudget + 10000,
                 `${scenario.name}: render target exceeded pixel-area budget: ${state.canvas.width}x${state.canvas.height}`);
               assert.equal(state.profile.particleCount, 262144, `${scenario.name}: particle count cap`);
@@ -169,6 +170,7 @@ jobs:
               assert.ok(frameCountDelta >= 5 && frameCountDelta <= 42,
                 `${scenario.name}: frame callbacks should be throttled near 30 FPS, observed ${frameCountDelta}/1.2s`);
               assert.equal(state.windowsStorage, null, `${scenario.name}: window-sharing storage must not be initialized`);
+              assert.equal(state.noWebGLFallback, false, `${scenario.name}: WebGL fallback should not be active on WebGL Chromium`);
               assert.deepEqual(state.links.map((link) => link.text), ['ArtStation', 'itch.io', 'GitHub']);
               assert.deepEqual(state.links.map((link) => link.href), [
                 'https://volkanturkut.artstation.com/',
@@ -176,13 +178,47 @@ jobs:
                 'https://github.com/volkanturkut',
               ]);
               assert.deepEqual(pageErrors, [], `${scenario.name}: no uncaught JavaScript errors`);
-              assert.deepEqual(failedRuntimeRequests, [], `${scenario.name}: original runtime assets must load`);
+              assert.deepEqual(failedRuntimeRequests, [], `${scenario.name}: runtime assets must load`);
 
               if (scenario.name === 'desktop') {
                 await page.screenshot({ path: '/tmp/entangled-desktop.png', fullPage: true });
               }
               await context.close();
             }
+
+            // Simulate a browser where neither WebGL API is exposed. In this case the heavy
+            // artwork bundle must not be imported and the CSS fallback should appear.
+            const fallbackContext = await browser.newContext({ viewport: { width: 800, height: 600 } });
+            await fallbackContext.addInitScript(() => {
+              Object.defineProperty(window, 'WebGLRenderingContext', { configurable: true, value: undefined });
+              Object.defineProperty(window, 'WebGL2RenderingContext', { configurable: true, value: undefined });
+            });
+            const fallbackPage = await fallbackContext.newPage();
+            let bundleRequested = false;
+            fallbackPage.on('request', (request) => {
+              if (new URL(request.url()).pathname.endsWith('/bundle.min.js')) bundleRequested = true;
+            });
+            const fallbackErrors = [];
+            fallbackPage.on('pageerror', (error) => fallbackErrors.push(error.message));
+            const fallbackResponse = await fallbackPage.goto('https://volkanturkut.github.io/', {
+              waitUntil: 'domcontentloaded',
+              timeout: 90000,
+            });
+            assert.equal(fallbackResponse?.status(), 200);
+            await fallbackPage.waitForFunction(() => document.documentElement.classList.contains('no-webgl'));
+            const fallbackState = await fallbackPage.evaluate(() => ({
+              noWebGL: document.documentElement.classList.contains('no-webgl'),
+              fallbackDisplay: getComputedStyle(document.querySelector('.fallback')).display,
+              canvasCount: document.querySelectorAll('canvas#scene').length,
+            }));
+            console.log('NO_WEBGL_FALLBACK', JSON.stringify({ ...fallbackState, bundleRequested, fallbackErrors }, null, 2));
+            assert.equal(fallbackState.noWebGL, true);
+            assert.equal(fallbackState.fallbackDisplay, 'grid');
+            assert.equal(fallbackState.canvasCount, 0);
+            assert.equal(bundleRequested, false, 'heavy bundle must not load if WebGL APIs are absent');
+            assert.deepEqual(fallbackErrors, [], 'no-WebGL fallback path should not throw JavaScript errors');
+            await fallbackContext.close();
+
             console.log('ALL_DEVICE_SMOKE_TESTS_PASSED', JSON.stringify(reports, null, 2));
           } finally {
             await browser.close();
