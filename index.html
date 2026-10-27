@@ -85,6 +85,27 @@ canvas {
 @media (prefers-reduced-motion: reduce) {
   .links a { transition: none; }
 }
+.fallback {
+  position: fixed;
+  z-index: 1;
+  inset: 0;
+  display: none;
+  place-items: center;
+  pointer-events: none;
+}
+.fallback-sphere {
+  width: min(70vmin, 420px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 57% 43%, rgba(220, 67, 54, .95) 0 2.2%, transparent 3.1%),
+    radial-gradient(circle at 46% 43%, rgba(50, 180, 105, .05) 0 28%, rgba(80, 205, 135, .42) 29% 30%, transparent 31%),
+    radial-gradient(circle at 50% 50%, transparent 0 41%, rgba(65, 185, 115, .35) 42% 44%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(35, 115, 72, .12), transparent 68%);
+  filter: drop-shadow(0 0 32px rgba(40, 150, 90, .14));
+}
+html.no-webgl .fallback { display: grid; }
+html.no-webgl canvas { display: none !important; }
 </style>
 
 <!-- Lightweight compatibility profile: cap GPU pixel ratio and the render loop. -->
@@ -105,7 +126,9 @@ canvas {
   } catch (_) {}
 
   const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
-  const targetFrameMs = 1000 / 30;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const targetFrameRate = reducedMotion ? 15 : 30;
+  const targetFrameMs = 1000 / targetFrameRate;
   let lastFrame = 0;
   let renderedFrameCount = 0;
   window.requestAnimationFrame = (callback) => nativeRequestAnimationFrame((timestamp) => {
@@ -122,7 +145,7 @@ canvas {
     particleCount: 262144,
     maxDevicePixelRatio: 1.25,
     renderPixelBudget: maxRenderPixels,
-    targetFramesPerSecond: 30,
+    targetFramesPerSecond: targetFrameRate,
     get renderScale() { return getRenderScale(); },
     multiWindow: false,
     pointerControls: false,
@@ -136,7 +159,23 @@ canvas {
 <script type="text/javascript" src="./fxhash.min.js"></script>
 </head>
 <body>
-<script type="module" src="./bundle.min.js"></script>
+<div class="fallback" aria-hidden="true"><div class="fallback-sphere"></div></div>
+<script type="module">
+  const hasWebGL = "WebGLRenderingContext" in window || "WebGL2RenderingContext" in window;
+  if (!hasWebGL) {
+    document.documentElement.classList.add("no-webgl");
+  } else {
+    import("./bundle.min.js").catch(() => {
+      document.documentElement.classList.add("no-webgl");
+    });
+    window.setTimeout(() => {
+      const canvas = document.querySelector("canvas#scene");
+      if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        document.documentElement.classList.add("no-webgl");
+      }
+    }, 12000);
+  }
+</script>
 <footer class="footer">
   <p class="creator">Volkan Turkut</p>
   <nav aria-label="Social links">
