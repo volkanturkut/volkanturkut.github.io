@@ -53,7 +53,7 @@ jobs:
           const originalScripts = [
             'src="./three.r157.min.js"',
             'src="./fxhash.min.js"',
-            'src="./bundle.min.js?disableWindowing=true"',
+            'src="./bundle.min.js"',
           ];
           const offsets = originalScripts.map((s) => html.indexOf(s));
           assert.ok(offsets.every((i) => i >= 0), 'all three original runtime scripts must be referenced');
@@ -95,7 +95,7 @@ jobs:
           assert.ok(html.includes('targetFramesPerSecond: 30'), 'frame-rate cap should remain enabled');
           assert.ok(html.includes('pointerControls: false'), 'pointer/touch interaction should remain disabled');
           assert.ok(html.includes('keyboardShortcuts: false'), 'keyboard shortcuts should remain disabled');
-          assert.ok(html.includes('disableWindowing=true'), 'the bundle must run with multi-window management disabled');
+          assert.ok(optimizedBundle.includes('Ht=!0,Ht&&'), 'multi-window management must be hard-disabled in the runtime');
           const optimizedBundle = readFileSync('bundle.min.js', 'utf8');
           assert.ok(optimizedBundle.includes('ut=262144'), 'GPU particle budget must remain capped at 262,144');
           assert.ok(!optimizedBundle.includes('ut=15e5'), 'original 1.5-million particle workload must not return');
