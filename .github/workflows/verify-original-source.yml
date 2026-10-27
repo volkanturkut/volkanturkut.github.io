@@ -91,5 +91,10 @@ jobs:
           }
 
           assert.ok(!html.includes('favicon.svg'), 'custom non-original favicon should not be referenced');
+          assert.ok(!existsSync('favicon.svg'), 'custom non-original favicon should be removed from the repository');
+          const config = readFileSync('_config.yml', 'utf8');
+          for (const excluded of ['.github', 'original-source', 'README.md', 'ORIGINAL_SOURCE_AUDIT.md', 'THIRD_PARTY_NOTICES.md']) {
+            assert.ok(config.includes(excluded), `non-page content should be excluded from the published site: ${excluded}`);
+          }
           console.log('PASS page wiring, local asset references, obsolete-file cleanup, and footer links');
           NODE
