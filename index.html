@@ -113,8 +113,19 @@ html.no-webgl canvas { display: none !important; }
 (() => {
   const nativeDpr = Number(window.devicePixelRatio) || 1;
   const maxRenderPixels = 1500000;
+  const cores = Number(navigator.hardwareConcurrency) || 0;
+  const memory = Number(navigator.deviceMemory) || 0;
+  const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+  const lowResource =
+    (cores > 0 && cores <= 4) ||
+    (memory > 0 && memory <= 4) ||
+    (coarsePointer && cores > 0 && cores <= 6) ||
+    (!cores && !memory);
+  const particleCount = lowResource ? 16384 : 65536;
+  const maxDevicePixelRatio = lowResource ? 1.0 : 1.25;
+  window.__ENTANGLED_PERF_PARTICLES__ = particleCount;
   const getRenderScale = () => Math.min(
-    1.25,
+    maxDevicePixelRatio,
     nativeDpr,
     Math.sqrt(maxRenderPixels / Math.max(1, window.innerWidth * window.innerHeight))
   );
@@ -127,7 +138,7 @@ html.no-webgl canvas { display: none !important; }
 
   const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const targetFrameRate = reducedMotion ? 15 : 30;
+  const targetFrameRate = reducedMotion ? 15 : lowResource ? 24 : 30;
   const targetFrameMs = 1000 / targetFrameRate;
   let lastFrame = 0;
   let renderedFrameCount = 0;
@@ -142,9 +153,11 @@ html.no-webgl canvas { display: none !important; }
   });
 
   window.__ENTANGLED_PERF__ = Object.freeze({
-    build: "low-end-r8",
-    particleCount: 65536,
-    maxDevicePixelRatio: 1.25,
+    build: "low-end-r9",
+    particleCount,
+    hardwareClass: lowResource ? "low" : "standard",
+    lowResource,
+    maxDevicePixelRatio,
     renderPixelBudget: maxRenderPixels,
     targetFramesPerSecond: targetFrameRate,
     get renderScale() { return getRenderScale(); },

@@ -23,12 +23,12 @@ The eight original files are preserved for comparison and study; they are exclud
 
 The active root `bundle.min.js` is intentionally modified. It is no longer a 100%-identical copy of the original runtime:
 
-1. **GPU workload:** `ut=15e5` (1,500,000) changed to `ut=65536` (65,536), reducing this configured particle workload by approximately **95.6%**.
+1. **GPU workload:** `ut=15e5` (1,500,000) changed to a hardware-aware cap: 16,384 particles on low-resource hardware and 65,536 on standard hardware. That is about **98.9% fewer** particles on low-resource devices and **95.6% fewer** on standard devices.
 2. **Window features:** multi-window management is hard-disabled; its manager is not initialized and the screen-permission/window synchronization flow is bypassed.
 3. **Input controls:** mouse, touch, drag, and wheel listeners used by the original control class are removed.
 4. **Keyboard actions:** the original Space pause, D debug, and S screenshot-save key handler is removed.
 5. **Low-DPI behavior:** the old fallback that doubled the internal render size when devicePixelRatio was 1 or less is removed.
-6. **Quality governor:** `index.html` caps effective device-pixel ratio at 1.25 and limits the render target to about 1.5 million pixels. This reduces expensive high-DPI and very-large-screen rendering.
+6. **Quality governor:** `index.html` caps effective device-pixel ratio at 1.0 on low-resource hardware and 1.25 on standard hardware, and limits the render target to about 1.5 million pixels. This reduces expensive high-DPI and very-large-screen rendering.
 7. **Frame governor:** global animation-frame callbacks are capped at 30 FPS, or 15 FPS for `prefers-reduced-motion`.
 8. **Graceful fallback:** if the browser lacks the WebGL API or the renderer fails to initialize, a simple CSS sphere illustration replaces the WebGL artwork instead of leaving a fully blank page.
 9. **Portfolio shell:** the root HTML retains the creator name and ArtStation, itch.io, and GitHub links. The page remains local/static, with no external font or runtime CDN.
@@ -36,7 +36,7 @@ The active root `bundle.min.js` is intentionally modified. It is no longer a 100
 ## Automated verification
 
 - `.github/workflows/verify-original-source.yml` checks all eight upstream archive hashes, required active-runtime tuning, footer links, local dependencies, removal of obsolete recreation files, and exclusion of reference material from Pages.
-- `.github/workflows/browser-smoke.yml` runs a Chromium/WebGL smoke test on the checked-out build for desktop, phone, small Android-sized, tablet, and large-monitor viewports. It measures whether the effective pixel ratio/render pixel budget and frame throttle are respected; checks JavaScript exceptions, runtime asset errors, that multi-window storage is not initialized, and that a screenshot contains visible artwork pixels; and uploads a desktop screenshot. The test deliberately avoids running the original 1.5-million-particle renderer as a comparison fixture because that heavy baseline can dominate a low-resource runner.
+- `.github/workflows/browser-smoke.yml` runs a Chromium/WebGL smoke test on the checked-out build for desktop, phone, small Android-sized, tablet, and large-monitor viewport profiles, simulating both low- and standard-resource hardware and using browser-like user agents to avoid fxhash preview-mode delays. It measures whether the effective pixel ratio/render pixel budget and frame throttle are respected; checks JavaScript exceptions, runtime asset errors, that multi-window storage is not initialized, and that a screenshot contains visible artwork pixels; and uploads a desktop screenshot. The test deliberately avoids running the original 1.5-million-particle renderer as a comparison fixture because that heavy baseline can dominate a low-resource runner.
 - GitHub Pages builds must still pass before the browser smoke workflow is triggered. The workflow's latest result is available in Actions.
 
 ## Percentage interpretation

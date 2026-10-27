@@ -2,11 +2,7 @@
 
 ## Entangled artwork and original runtime
 
-The following files in the repository's root are byte-for-byte Git blob matches for the preserved original files in [fire17/entangled-grail](https://github.com/fire17/entangled-grail/tree/main/versions/v0-original-entangled):
-
-- `bundle.min.js` — original Entangled production generator.
-- `fxhash.min.js` — fxhash runtime from the recovered source folder.
-- `three.r157.min.js` — Three.js r157.
+The pristine copies under `original-source/versions/v0-original-entangled/` are byte-for-byte Git blob matches for the upstream files in [fire17/entangled-grail](https://github.com/fire17/entangled-grail/tree/main/versions/v0-original-entangled). The active root `bundle.min.js` is a modified derivative: window features and input controls are disabled, diagnostic dumps are removed, GPU antialiasing is disabled, low-power GPU mode is requested, and particle load adapts to hardware. Root `fxhash.min.js` and `three.r157.min.js` remain exact copies of their archived upstream versions.
 
 The accompanying original-source references are preserved under `original-source/versions/v0-original-entangled/`, including the beautified bundle and original HTML shell.
 
