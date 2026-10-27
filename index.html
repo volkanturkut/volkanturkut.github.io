@@ -167,12 +167,16 @@ html.no-webgl canvas { display: none !important; }
   if (!hasWebGL) {
     document.documentElement.classList.add("no-webgl");
   } else {
-    import("./bundle.min.js").catch(() => {
+    import("./bundle.min.js").catch((error) => {
+      window.__ENTANGLED_LOAD_ERROR__ = String(error && (error.stack || error.message) || error);
       document.documentElement.classList.add("no-webgl");
     });
     window.setTimeout(() => {
       const canvas = document.querySelector("canvas#scene");
       if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        if (!window.__ENTANGLED_LOAD_ERROR__) {
+          window.__ENTANGLED_LOAD_ERROR__ = "Renderer did not create a visible, non-zero canvas within 12 seconds.";
+        }
         document.documentElement.classList.add("no-webgl");
       }
     }, 12000);
