@@ -111,7 +111,7 @@ html.no-webgl canvas { display: none !important; }
 <!-- Lightweight compatibility profile: cap GPU pixel ratio and the render loop. -->
 <script>
 (() => {
-  const nativeDpr = Number(window.devicePixelRatio) || 1;
+  const getNativeDpr = () => Number(window.devicePixelRatio) || 1;
   const maxRenderPixels = 1000000;
   const cores = Number(navigator.hardwareConcurrency) || 0;
   const memory = Number(navigator.deviceMemory) || 0;
@@ -126,15 +126,17 @@ html.no-webgl canvas { display: none !important; }
   window.__ENTANGLED_PERF_PARTICLES__ = particleCount;
   const getRenderScale = () => Math.min(
     maxDevicePixelRatio,
-    nativeDpr,
+    getNativeDpr(),
     Math.sqrt(maxRenderPixels / Math.max(1, window.innerWidth * window.innerHeight))
   );
   try {
-    Object.defineProperty(window, "devicePixelRatio", {
+    Object.defineProperty(window, "__ENTANGLED_RENDER_SCALE__", {
       configurable: true,
       get: getRenderScale
     });
-  } catch (_) {}
+  } catch (_) {
+    window.__ENTANGLED_RENDER_SCALE__ = getRenderScale();
+  }
 
   const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -153,7 +155,7 @@ html.no-webgl canvas { display: none !important; }
   });
 
   window.__ENTANGLED_PERF__ = Object.freeze({
-    build: "low-end-r10",
+    build: "low-end-r11",
     particleCount,
     hardwareClass: lowResource ? "low" : "standard",
     lowResource,
