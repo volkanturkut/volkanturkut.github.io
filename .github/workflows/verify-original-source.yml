@@ -98,7 +98,7 @@ jobs:
           assert.ok(html.includes('html.no-webgl .fallback'), 'a low-cost fallback visual must be available without WebGL');
           assert.ok(html.includes('WebGLRenderingContext'), 'the WebGL capability check must remain enabled');
           assert.ok(html.includes('__ENTANGLED_PERF__'), 'performance profile should be visible for automated smoke checks');
-          assert.ok(html.includes('build: "low-end-r4"'), 'deployment profile marker should be present for live browser verification');
+          assert.ok(html.includes('build: "low-end-r5"'), 'deployment profile marker should be present for live browser verification');
           assert.ok(html.includes('maxDevicePixelRatio: 1.25'), 'DPR cap should remain enabled');
           assert.ok(html.includes('const targetFrameRate = reducedMotion ? 15 : 30'), 'reduced-motion and normal frame caps should remain enabled');
           assert.ok(html.includes('renderPixelBudget: maxRenderPixels'), 'render-pixel budget should remain enabled');
@@ -112,6 +112,7 @@ jobs:
           assert.ok(html.includes('keyboardShortcuts: false'), 'keyboard shortcuts should remain disabled');
           const optimizedBundle = readFileSync('bundle.min.js', 'utf8');
           assert.ok(optimizedBundle.includes('Ht=!0,Ht&&'), 'multi-window management must be hard-disabled in the runtime');
+          assert.ok(optimizedBundle.includes('"complete"===document.readyState&&"hidden"!=document.visibilityState&&Bt()'), 'dynamically imported bundle must initialize even if page load already fired');
           assert.ok(optimizedBundle.includes('ut=262144'), 'GPU particle budget must remain capped at 262,144');
           assert.ok(!optimizedBundle.includes('ut=15e5'), 'original 1.5-million particle workload must not return');
           for (const input of ['window.addEventListener("touchstart"', 'window.addEventListener("mousedown"', 'window.addEventListener("mousemove"', 'window.addEventListener("wheel"', 'document.addEventListener("keydown"']) {
