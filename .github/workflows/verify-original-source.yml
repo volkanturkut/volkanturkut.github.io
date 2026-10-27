@@ -99,7 +99,7 @@ jobs:
           assert.ok(html.includes('WebGLRenderingContext'), 'the WebGL capability check must remain enabled');
           assert.ok(html.includes('__ENTANGLED_PERF__'), 'performance profile should be visible for automated smoke checks');
           assert.ok(html.includes('build: "low-end-r9"'), 'deployment profile marker should be present for live browser verification');
-          assert.ok(html.includes('maxDevicePixelRatio: 1.25'), 'DPR cap should remain enabled');
+          assert.ok(html.includes('maxDevicePixelRatio,'), 'adaptive DPR cap must be exposed in the performance profile');
           assert.ok(html.includes('const targetFrameRate = reducedMotion ? 15 : lowResource ? 24 : 30'), 'reduced-motion and adaptive frame caps should remain enabled');
           assert.ok(html.includes('const particleCount = lowResource ? 16384 : 65536'), 'low-resource devices must receive a smaller particle grid');
           assert.ok(html.includes('const maxDevicePixelRatio = lowResource ? 1.0 : 1.25'), 'low-resource devices must use a lower pixel-ratio cap');
@@ -124,6 +124,7 @@ jobs:
           assert.ok(!optimizedBundle.includes('console.log("today:"'), 'startup diagnostic logging should be absent');
           assert.ok(!optimizedBundle.includes('DETAILED FEATURES'), 'feature-dump logging should be absent');
           assert.ok(!optimizedBundle.includes('ut=15e5'), 'original 1.5-million particle workload must not return');
+          assert.ok(!optimizedBundle.includes('Tn<=1'), 'the old low-DPI render-size doubling path must stay removed');
           for (const input of ['window.addEventListener("touchstart"', 'window.addEventListener("mousedown"', 'window.addEventListener("mousemove"', 'window.addEventListener("wheel"', 'document.addEventListener("keydown"']) {
             assert.ok(!optimizedBundle.includes(input), `non-visual event handler must stay removed: ${input}`);
           }
