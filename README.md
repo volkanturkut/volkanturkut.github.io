@@ -19,7 +19,7 @@ All three files have the same Git blob SHA as the corresponding files in [fire17
 - The page shell and responsive styling are adapted for a minimal personal portfolio.
 - The footer shows Volkan Turkut and links to ArtStation, itch.io, and GitHub.
 - The original runtime assets are served locally; no paid hosting, bundler, CDN, or external font is required.
-- The original artwork runtime remains the active renderer. The older recreation files in the repository are not loaded by `index.html`.
+- The original artwork runtime remains the active renderer. The previous custom recreation modules have been removed to avoid confusing them with the original source.
 
 ## Credits and rights
 
