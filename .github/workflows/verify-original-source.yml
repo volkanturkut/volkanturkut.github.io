@@ -62,6 +62,7 @@ jobs:
           const stylesheet = readFileSync('styles.css', 'utf8');
           assert.ok(html.includes('href="./styles.css"'), 'page should load an external stylesheet');
           assert.ok(html.includes('src="./app.js"'), 'page should use the native ES module entry point');
+          assert.ok(html.includes('<noscript><style>.fallback { display: grid; }</style></noscript>'), 'a CSS-only artwork fallback must appear if JavaScript is disabled');
           const originalScripts = [
             'await import("./three.r157.min.js")',
             'loadClassicScript("./fxhash.min.js")',
