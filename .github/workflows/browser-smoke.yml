@@ -1,0 +1,133 @@
+name: Browser smoke test
+
+on:
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deployed revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright and Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Test live WebGL page
+        shell: bash
+        env:
+          EXPECTED_REVISION: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: [
+              '--use-gl=angle',
+              '--use-angle=swiftshader',
+              '--enable-webgl',
+              '--ignore-gpu-blocklist',
+              '--enable-unsafe-swiftshader',
+            ],
+          });
+
+          try {
+            const page = await browser.newPage({
+              viewport: { width: 1280, height: 800 },
+              deviceScaleFactor: 1,
+            });
+            const pageErrors = [];
+            const failedSameOriginRequests = [];
+            page.on('pageerror', (error) => pageErrors.push(error.message));
+            page.on('requestfailed', (request) => {
+              if (request.url().startsWith('https://volkanturkut.github.io/')) {
+                failedSameOriginRequests.push({ url: request.url(), error: request.failure()?.errorText });
+              }
+            });
+            page.on('response', (response) => {
+              if (response.url().startsWith('https://volkanturkut.github.io/') && response.status() >= 400) {
+                failedSameOriginRequests.push({ url: response.url(), status: response.status() });
+              }
+            });
+
+            await page.goto('https://volkanturkut.github.io/', {
+              waitUntil: 'domcontentloaded',
+              timeout: 90000,
+            });
+            await page.waitForSelector('canvas#scene', { state: 'attached', timeout: 45000 });
+            await page.waitForFunction(() => {
+              const canvas = document.querySelector('canvas#scene');
+              return canvas && canvas.width > 0 && canvas.height > 0;
+            }, { timeout: 45000 });
+            await page.waitForTimeout(3000);
+
+            const state = await page.evaluate(() => {
+              const canvas = document.querySelector('canvas#scene');
+              const links = [...document.querySelectorAll('.links a')].map((a) => ({
+                text: a.textContent.trim(),
+                href: a.href,
+              }));
+              return {
+                title: document.title,
+                canvas: canvas ? {
+                  width: canvas.width,
+                  height: canvas.height,
+                  cssWidth: getComputedStyle(canvas).width,
+                  cssHeight: getComputedStyle(canvas).height,
+                } : null,
+                background: getComputedStyle(document.body).backgroundColor,
+                links,
+              };
+            });
+
+            console.log('LIVE_RENDER_STATE', JSON.stringify({
+              expectedRevision: process.env.EXPECTED_REVISION,
+              ...state,
+              pageErrors,
+              failedSameOriginRequests,
+            }, null, 2));
+
+            assert.ok(state.canvas, 'Entangled canvas #scene must be created');
+            assert.ok(state.canvas.width > 0 && state.canvas.height > 0, 'canvas dimensions must be nonzero');
+            assert.deepEqual(state.links.map((l) => l.text), ['ArtStation', 'itch.io', 'GitHub']);
+            assert.deepEqual(state.links.map((l) => l.href), [
+              'https://volkanturkut.artstation.com/',
+              'https://volkanturkut.itch.io/',
+              'https://github.com/volkanturkut',
+            ]);
+            assert.deepEqual(pageErrors, [], 'page must not throw JavaScript exceptions');
+            assert.deepEqual(failedSameOriginRequests, [], 'site assets must load successfully');
+            console.log('PASS live page, WebGL canvas, JavaScript runtime, local assets, and footer');
+          } finally {
+            await browser.close();
+          }
+          NODE
+
+      - name: Upload browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: entangled-browser-smoke
+          path: /tmp/entangled-page.png
+          if-no-files-found: ignore
