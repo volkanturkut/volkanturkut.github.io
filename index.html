@@ -167,10 +167,14 @@ html.no-webgl canvas { display: none !important; }
   if (!hasWebGL) {
     document.documentElement.classList.add("no-webgl");
   } else {
-    import("./bundle.min.js").catch((error) => {
+    try {
+      // Await the renderer so its window.onload initializer is registered before
+      // the browser dispatches load. A fire-and-forget import can miss that event.
+      await import("./bundle.min.js");
+    } catch (error) {
       window.__ENTANGLED_LOAD_ERROR__ = String(error && (error.stack || error.message) || error);
       document.documentElement.classList.add("no-webgl");
-    });
+    }
     window.setTimeout(() => {
       const canvas = document.querySelector("canvas#scene");
       if (!canvas || canvas.width === 0 || canvas.height === 0) {
