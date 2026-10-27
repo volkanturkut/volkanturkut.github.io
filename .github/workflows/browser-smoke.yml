@@ -60,7 +60,7 @@ jobs:
             const pageErrors = [];
             const failedSameOriginRequests = [];
             page.on('pageerror', (error) => pageErrors.push(error.message));
-            const isRuntimeAsset = (url) => /\\/(bundle\\.min\\.js|fxhash\\.min\\.js|three\\.r157\\.min\\.js)$/.test(new URL(url).pathname);
+            const isRuntimeAsset = (url) => ['/bundle.min.js', '/fxhash.min.js', '/three.r157.min.js'].some((suffix) => new URL(url).pathname.endsWith(suffix));
             page.on('requestfailed', (request) => {
               if (request.url().startsWith('https://volkanturkut.github.io/') && isRuntimeAsset(request.url())) {
                 failedSameOriginRequests.push({ url: request.url(), error: request.failure()?.errorText });
