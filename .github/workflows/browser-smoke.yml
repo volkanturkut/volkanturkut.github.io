@@ -57,6 +57,7 @@ jobs:
             { name: 'phone', viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
             { name: 'small-android', viewport: { width: 360, height: 800 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
             { name: 'tablet', viewport: { width: 768, height: 1024 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
+            { name: 'large-monitor', viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 1.5 },
           ];
 
           const reports = [];
@@ -123,6 +124,8 @@ jobs:
                   profile: profile ? {
                     particleCount: profile.particleCount,
                     maxDevicePixelRatio: profile.maxDevicePixelRatio,
+                    renderPixelBudget: profile.renderPixelBudget,
+                    renderScale: profile.renderScale,
                     targetFramesPerSecond: profile.targetFramesPerSecond,
                     multiWindow: profile.multiWindow,
                     pointerControls: profile.pointerControls,
@@ -152,17 +155,17 @@ jobs:
               assert.ok(state.canvas, `${scenario.name}: WebGL canvas must exist`);
               assert.ok(state.canvas.width > 0 && state.canvas.height > 0, `${scenario.name}: canvas resolution must be positive`);
               assert.ok(state.dpr <= 1.25, `${scenario.name}: DPR must be capped at 1.25, got ${state.dpr}`);
-              assert.ok(state.canvas.width <= Math.ceil(scenario.viewport.width * 1.25) + 2,
-                `${scenario.name}: canvas width exceeded capped pixel ratio: ${state.canvas.width}`);
-              assert.deepEqual(state.profile, {
-                particleCount: 262144,
-                maxDevicePixelRatio: 1.25,
-                targetFramesPerSecond: 30,
-                multiWindow: false,
-                pointerControls: false,
-                keyboardShortcuts: false,
-                frameCount: state.profile.frameCount,
-              }, `${scenario.name}: expected low-end performance profile`);
+              assert.ok(state.profile, `${scenario.name}: performance profile must exist`);
+              assert.ok(state.canvas.width * state.canvas.height <= state.profile.renderPixelBudget + 10000,
+                `${scenario.name}: render target exceeded pixel-area budget: ${state.canvas.width}x${state.canvas.height}`);
+              assert.equal(state.profile.particleCount, 262144, `${scenario.name}: particle count cap`);
+              assert.equal(state.profile.maxDevicePixelRatio, 1.25);
+              assert.equal(state.profile.renderPixelBudget, 1500000);
+              assert.ok(state.profile.renderScale > 0 && state.profile.renderScale <= 1.25);
+              assert.equal(state.profile.targetFramesPerSecond, 30);
+              assert.equal(state.profile.multiWindow, false);
+              assert.equal(state.profile.pointerControls, false);
+              assert.equal(state.profile.keyboardShortcuts, false);
               assert.ok(frameCountDelta >= 5 && frameCountDelta <= 42,
                 `${scenario.name}: frame callbacks should be throttled near 30 FPS, observed ${frameCountDelta}/1.2s`);
               assert.equal(state.windowsStorage, null, `${scenario.name}: window-sharing storage must not be initialized`);
