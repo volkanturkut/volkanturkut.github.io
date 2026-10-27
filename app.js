@@ -25,7 +25,10 @@ function loadClassicScript(path) {
 }
 
 function observeRendererCanvas(timeoutId) {
+  const decoratedCanvases = new WeakSet();
   const decorateCanvas = (canvas) => {
+    if (decoratedCanvases.has(canvas)) return;
+    decoratedCanvases.add(canvas);
     canvas.setAttribute("aria-hidden", "true");
     canvas.setAttribute("role", "presentation");
     canvas.tabIndex = -1;
@@ -79,6 +82,7 @@ async function startArtwork() {
     const canvas = document.querySelector("canvas#scene");
     if (!canvas || canvas.width === 0 || canvas.height === 0) {
       showFallback(new Error("The renderer did not create a usable canvas within 30 seconds."));
+      canvasObserver.disconnect();
     }
   }, RENDERER_TIMEOUT_MS);
   const canvasObserver = observeRendererCanvas(timeoutId);
