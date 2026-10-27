@@ -156,8 +156,6 @@ html.no-webgl canvas { display: none !important; }
 })();
 </script>
 
-<script type="module" src="./three.r157.min.js"></script>
-<script type="text/javascript" src="./fxhash.min.js"></script>
 </head>
 <body>
 <div class="fallback" aria-hidden="true"><div class="fallback-sphere"></div></div>
@@ -168,6 +166,17 @@ html.no-webgl canvas { display: none !important; }
     document.documentElement.classList.add("no-webgl");
   } else {
     try {
+      // Keep the 650 KB Three.js runtime and the generator off devices without WebGL.
+      await import("./three.r157.min.js");
+
+      await new Promise((resolve, reject) => {
+        const fxhash = document.createElement("script");
+        fxhash.src = "./fxhash.min.js";
+        fxhash.onload = resolve;
+        fxhash.onerror = () => reject(new Error("Could not load fxhash runtime"));
+        document.head.appendChild(fxhash);
+      });
+
       // Await the renderer so its window.onload initializer is registered before
       // the browser dispatches load. A fire-and-forget import can miss that event.
       await import("./bundle.min.js");
