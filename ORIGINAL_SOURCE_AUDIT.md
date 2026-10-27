@@ -26,7 +26,8 @@ Compared against [fire17/entangled-grail/versions/v0-original-entangled](https:/
 
 ## Differences from the upstream experience
 
-- The site's root `index.html` is intentionally customized: portfolio metadata, favicon, responsive footer, and the ArtStation / itch.io / GitHub links are additions.
+- The site's root `index.html` is intentionally customized: portfolio metadata, responsive footer, and the ArtStation / itch.io / GitHub links are additions. The custom favicon was removed during cleanup.
+- The root page follows the original runtime script order (Three.js module, fxhash runtime, then Entangled bundle). The custom footer is intentionally retained from the portfolio requirement.
 - The original renderer is active, but a customized page shell and differing browser, viewport, GPU, or WebGL behavior mean pixel-identical rendering cannot be inferred from source hashes alone.
 - The previous custom recreation modules were removed, leaving the original runtime files and the preserved reference source.
 - The preserved upstream bundle's redistribution rights are not independently established by this comparison. The upstream notice says all rights remain with Bjørn Staal and asks users to confirm VERTEX terms before public redistribution.
@@ -35,4 +36,8 @@ Compared against [fire17/entangled-grail/versions/v0-original-entangled](https:/
 
 - **Original core runtime files:** 100% exact file identity (3 of 3).
 - **Files in the preserved original source folder:** 100% represented (8 of 8).
-- **Whole website / visual output:** no honest percentage can be assigned from file inventory alone. The page shell is customized and visual parity requires browser-based comparison at matching viewport and iteration/seed.
+- **Whole website / visual output:** no honest percentage can be assigned from file inventory alone. The page shell remains customized for the portfolio, so whole-page pixel parity is intentionally not 100%. The artwork-renderer source files are exact matches.
+
+## Automated checks
+
+The workflow at `.github/workflows/verify-original-source.yml` verifies the Git blob IDs for all eight source-folder files, checks the runtime script order, confirms local assets exist, confirms the requested footer links, and fails if any former recreation module is reintroduced. Its result is tracked in GitHub Actions. A successful static-source check does not replace a live browser/WebGL screenshot test; this environment could not directly fetch the GitHub Pages URL for visual inspection.
