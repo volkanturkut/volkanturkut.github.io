@@ -161,7 +161,8 @@ html.no-webgl canvas { display: none !important; }
 <body>
 <div class="fallback" aria-hidden="true"><div class="fallback-sphere"></div></div>
 <script type="module">
-  const hasWebGL = "WebGLRenderingContext" in window || "WebGL2RenderingContext" in window;
+  const hasWebGL = typeof window.WebGLRenderingContext === "function" ||
+    typeof window.WebGL2RenderingContext === "function";
   if (!hasWebGL) {
     document.documentElement.classList.add("no-webgl");
   } else {
