@@ -93,7 +93,7 @@ jobs:
           assert.ok(html.includes('html.no-webgl .fallback'), 'a low-cost fallback visual must be available without WebGL');
           assert.ok(html.includes('WebGLRenderingContext'), 'the WebGL capability check must remain enabled');
           assert.ok(html.includes('__ENTANGLED_PERF__'), 'performance profile should be visible for automated smoke checks');
-          assert.ok(html.includes('build: "low-end-r1"'), 'deployment profile marker should be present for live browser verification');
+          assert.ok(html.includes('build: "low-end-r2"'), 'deployment profile marker should be present for live browser verification');
           assert.ok(html.includes('maxDevicePixelRatio: 1.25'), 'DPR cap should remain enabled');
           assert.ok(html.includes('const targetFrameRate = reducedMotion ? 15 : 30'), 'reduced-motion and normal frame caps should remain enabled');
           assert.ok(html.includes('renderPixelBudget: maxRenderPixels'), 'render-pixel budget should remain enabled');
