@@ -1,0 +1,95 @@
+name: Verify original Entangled source
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-original-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify exact original file identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          check_blob() {
+            local file="$1"
+            local expected="$2"
+            local actual
+            actual="$(git hash-object "$file")"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "::error file=$file::Git blob mismatch. expected=$expected actual=$actual"
+              exit 1
+            fi
+            echo "PASS exact upstream blob: $file ($actual)"
+          }
+
+          # Original runtime files (these are loaded by the page).
+          check_blob "bundle.min.js" "a554a6a3046692c50125decc6b094238598535f8"
+          check_blob "fxhash.min.js" "8a91ebf2f97f6c30496aae43b90c01141a0de2df"
+          check_blob "three.r157.min.js" "7a384bfb1b51375a18e6480b984e0834f5525d1c"
+
+          # Remaining files from the original v0 source folder, preserved as reference.
+          check_blob "original-source/versions/v0-original-entangled/bundle.beautified.js" "f5d0cbd700c64d6aedf7094ab1fff06ef1a05cfe"
+          check_blob "original-source/versions/v0-original-entangled/ITERATION_COLORS.txt" "04977253db54288e36a7a23240e6fe45c6343811"
+          check_blob "original-source/versions/v0-original-entangled/index.html" "0a0da8986b2783f7e072309058284d09f797c0f7"
+          check_blob "original-source/versions/v0-original-entangled/scheme_map.js" "2837db3d7a8116edce593f03ebbebb3888443c26"
+          check_blob "original-source/versions/v0-original-entangled/scheme_slice.js" "62dd1f36186e55a11f8889000cda761ea9c05d55"
+
+      - name: Check page wiring and remove obsolete renderer references
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { existsSync, readFileSync } from 'node:fs';
+
+          const html = readFileSync('index.html', 'utf8');
+          const originalScripts = [
+            'src="./three.r157.min.js"',
+            'src="./fxhash.min.js"',
+            'src="./bundle.min.js"',
+          ];
+          const offsets = originalScripts.map((s) => html.indexOf(s));
+          assert.ok(offsets.every((i) => i >= 0), 'all three original runtime scripts must be referenced');
+          assert.ok(offsets[0] < offsets[1] && offsets[1] < offsets[2],
+            'runtime must load in upstream order: Three.js, fxhash, Entangled bundle');
+
+          for (const legacy of [
+            'GPUComputationRenderer.js',
+            'WindowManager.js',
+            'computeShaders.js',
+            'glslNoise.js',
+            'glslUtils.js',
+            'main.js',
+            'materials.js',
+          ]) {
+            assert.ok(!html.includes(legacy), `index.html must not reference obsolete recreation file: ${legacy}`);
+            assert.ok(!existsSync(legacy), `obsolete recreation file must be removed: ${legacy}`);
+          }
+
+          const localResources = [...html.matchAll(/(?:src|href)=["'](\.\/[^"']+)["']/g)].map((m) => m[1]);
+          for (const resource of localResources) {
+            assert.ok(existsSync(resource.slice(2)), `missing local resource: ${resource}`);
+          }
+
+          const requiredPortfolioItems = [
+            'Volkan Turkut',
+            'https://volkanturkut.artstation.com/',
+            'https://volkanturkut.itch.io/',
+            'https://github.com/volkanturkut',
+          ];
+          for (const item of requiredPortfolioItems) {
+            assert.ok(html.includes(item), `missing portfolio item: ${item}`);
+          }
+
+          assert.ok(!html.includes('favicon.svg'), 'custom non-original favicon should not be referenced');
+          console.log('PASS page wiring, local asset references, obsolete-file cleanup, and footer links');
+          NODE
