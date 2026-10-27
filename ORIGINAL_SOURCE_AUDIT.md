@@ -22,7 +22,7 @@ Compared against [fire17/entangled-grail/versions/v0-original-entangled](https:/
 | `scheme_slice.js` | `original-source/versions/v0-original-entangled/scheme_slice.js` |
 | `index.html` | `original-source/versions/v0-original-entangled/index.html` |
 
-**Original source-folder coverage: 8/8 files (100%)** when combined with the three exact runtime files in the site root. The five added references were copied from the upstream paths listed above; they are preserved as references and are not loaded by the portfolio page.
+**Original source-folder coverage: 8/8 files (100%)** when combined with the three exact runtime files in the site root. The five added references were copied from the upstream paths listed above; they are preserved in the GitHub repository, are not loaded by the portfolio page, and are excluded from the published Pages output.
 
 ## Differences from the upstream experience
 
