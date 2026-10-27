@@ -106,6 +106,7 @@ jobs:
               });
 
               const page = await context.newPage();
+              await page.setCacheEnabled(false);
               const pageErrors = [];
               const failedRuntimeRequests = [];
               page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -227,6 +228,7 @@ jobs:
               Object.defineProperty(window, 'WebGL2RenderingContext', { configurable: true, value: undefined });
             });
             const fallbackPage = await fallbackContext.newPage();
+            await fallbackPage.setCacheEnabled(false);
             let bundleRequested = false;
             fallbackPage.on('request', (request) => {
               if (new URL(request.url()).pathname.endsWith('/bundle.min.js')) bundleRequested = true;
