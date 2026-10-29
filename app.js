@@ -4,6 +4,7 @@ const RENDERER_TIMEOUT_MS = 30_000;
 function showFallback(error) {
   // Prevent queued animation callbacks from continuing to spend CPU after fallback.
   window.__ENTANGLED_STOP_RENDERING__ = true;
+  root.classList.remove("webgl-ready");
   if (error) {
     window.__ENTANGLED_LOAD_ERROR__ = String(error.stack || error.message || error);
   }
@@ -68,6 +69,48 @@ function observeRendererCanvas() {
   return observer;
 }
 
+function installResponsiveResizeSupport() {
+  // Mobile browser chrome and device rotation can change the visible viewport
+  // without producing a useful window resize event on every browser.
+  let resizeTimer = 0;
+  const queueResize = () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      if (document.visibilityState === "visible") {
+        window.dispatchEvent(new Event("resize"));
+      }
+    }, 100);
+  };
+
+  window.visualViewport?.addEventListener("resize", queueResize, { passive: true });
+  window.addEventListener("orientationchange", queueResize, { passive: true });
+  window.addEventListener("pageshow", queueResize, { passive: true });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") queueResize();
+  });
+  return queueResize;
+}
+
+function revealAfterFirstRender(timeoutId, canvasObserver) {
+  const checkForRenderedFrames = () => {
+    if (window.__ENTANGLED_STOP_RENDERING__) return;
+
+    const canvas = document.querySelector("canvas#scene");
+    const hasRenderedFrames = Number(window.__ENTANGLED_PERF__?.frameCount || 0) >= 3;
+    if (canvas && canvas.width > 0 && canvas.height > 0 && hasRenderedFrames) {
+      window.clearTimeout(timeoutId);
+      canvasObserver.disconnect();
+      root.classList.remove("no-webgl");
+      root.classList.add("webgl-ready");
+      return;
+    }
+
+    window.requestAnimationFrame(checkForRenderedFrames);
+  };
+
+  window.requestAnimationFrame(checkForRenderedFrames);
+}
+
 async function startArtwork() {
   // Keep unsupported browsers lightweight: don't install the frame-rate
   // governor or download any rendering dependencies when WebGL is absent.
@@ -77,15 +120,16 @@ async function startArtwork() {
   }
 
   let startupTimedOut = false;
-  // A canvas can be allocated before its first frame. Keep the watchdog armed
-  // until the renderer has actually scheduled at least one governed frame.
+  const canvasObserver = observeRendererCanvas();
+  // A sized canvas is not enough: wait for actual animation callbacks before
+  // dismissing the instant CSS artwork or stopping the loading watchdog.
   const timeoutId = window.setTimeout(() => {
     const canvas = document.querySelector("canvas#scene");
     const rendererStarted = Boolean(
       canvas &&
       canvas.width > 0 &&
       canvas.height > 0 &&
-      window.__ENTANGLED_PERF__?.frameCount > 0
+      window.__ENTANGLED_PERF__?.frameCount >= 3
     );
 
     if (!rendererStarted) {
@@ -95,22 +139,27 @@ async function startArtwork() {
 
     canvasObserver.disconnect();
   }, RENDERER_TIMEOUT_MS);
-  const canvasObserver = observeRendererCanvas();
 
   try {
-    // Install hardware-aware limits before initializing the renderer. This
-    // module is intentionally lazy so the no-WebGL shell does minimal work.
+    // Install conservative limits before loading the renderer. The module stays
+    // unloaded on unsupported browsers, keeping their fallback path lightweight.
     const { initializePerformanceProfile } = await import("./performance.js");
     if (startupTimedOut) return;
     initializePerformanceProfile();
+    const queueResize = installResponsiveResizeSupport();
 
-    await import("./three.r157.min.js");
-    if (startupTimedOut) return;
-
-    await loadClassicScript("./fxhash.min.js");
+    // Download independent dependencies together to reduce time-to-first-art.
+    // The generator itself is imported only after both globals are ready.
+    const threePromise = import("./three.r157.min.js");
+    const fxhashPromise = loadClassicScript("./fxhash.min.js");
+    await Promise.all([threePromise, fxhashPromise]);
     if (startupTimedOut) return;
 
     await import("./bundle.min.js");
+    if (startupTimedOut) return;
+
+    queueResize();
+    revealAfterFirstRender(timeoutId, canvasObserver);
   } catch (error) {
     window.clearTimeout(timeoutId);
     canvasObserver.disconnect();
