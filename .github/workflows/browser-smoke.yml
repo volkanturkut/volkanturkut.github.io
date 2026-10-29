@@ -99,9 +99,9 @@ jobs:
               timeout: 45000,
             });
             assert.equal(response?.status(), 200, `${label}: local site must return HTTP 200`);
-            const activeBuild = await page.evaluate(() => window.__ENTANGLED_PERF__?.build === 'low-end-r12');
+            const activeBuild = await page.evaluate(() => window.__ENTANGLED_PERF__?.build === 'low-end-r13');
             if (requirePerformanceProfile) {
-              assert.ok(activeBuild, `${label}: expected low-end-r12 performance profile from checked-out commit`);
+              assert.ok(activeBuild, `${label}: expected low-end-r13 performance profile from checked-out commit`);
             }
             console.log(`${label}: ${requirePerformanceProfile ? 'running checked-out performance profile from' : 'checking lightweight fallback shell on'} ${process.env.EXPECTED_REVISION}`);
             return response;
@@ -187,6 +187,10 @@ jobs:
                 const profile = window.__ENTANGLED_PERF__;
                 return {
                   title: document.title,
+                  creatorFontSize: getComputedStyle(document.querySelector('.creator')).fontSize,
+                  firstLinkFontSize: getComputedStyle(document.querySelector('.links a')).fontSize,
+                  canvasFilter: canvas ? getComputedStyle(canvas).filter : null,
+                  webglReady: document.documentElement.classList.contains('webgl-ready'),
                   viewport: { width: window.innerWidth, height: window.innerHeight },
                   documentSize: {
                     width: document.documentElement.scrollWidth,
@@ -257,7 +261,7 @@ jobs:
               assert.equal(state.noWebGLFallback, false, `${scenario.name}: renderer fell back; rendererLoadError=${state.rendererLoadError}, pageErrors=${JSON.stringify(pageErrors)}`);
               assert.ok(state.canvas.width > 0 && state.canvas.height > 0, `${scenario.name}: canvas resolution must be positive`);
               assert.ok(state.profile, `${scenario.name}: performance profile must exist`);
-              assert.equal(state.profile.build, 'low-end-r12');
+              assert.equal(state.profile.build, 'low-end-r13');
               assert.ok(state.dpr > 0 && state.dpr <= state.profile.maxDevicePixelRatio, `${scenario.name}: effective DPR must respect the hardware cap, got ${state.dpr}`);
               assert.ok(state.canvas.width * state.canvas.height <= state.profile.renderPixelBudget + 10000,
                 `${scenario.name}: render target exceeded pixel-area budget: ${state.canvas.width}x${state.canvas.height}`);
@@ -281,13 +285,93 @@ jobs:
                 'https://volkanturkut.itch.io/',
                 'https://github.com/volkanturkut',
               ]);
-              assert.ok(state.linkTargetHeights.every((height) => height >= 24),
-                `${scenario.name}: footer links must have at least 24 CSS-pixel touch targets, got ${JSON.stringify(state.linkTargetHeights)}`);
+              assert.equal(state.title, 'Volkan Turkut', `${scenario.name}: page title should be the portfolio name`);
+              assert.ok(Number.parseFloat(state.creatorFontSize) >= 12, `${scenario.name}: creator text should be at least 12px`);
+              assert.ok(Number.parseFloat(state.firstLinkFontSize) >= 12, `${scenario.name}: social links should be at least 12px`);
+              assert.ok(state.canvasFilter?.includes('saturate(1.55)') && state.canvasFilter.includes('contrast(1.16)'),
+                `${scenario.name}: canvas colors should use stronger saturation and contrast, got ${state.canvasFilter}`);
+              assert.ok(state.webglReady, `${scenario.name}: startup placeholder should hide only after rendering begins`);
+              assert.ok(state.linkTargetHeights.every((height) => height >= 36),
+                `${scenario.name}: footer links should have at least 36 CSS-pixel touch targets, got ${JSON.stringify(state.linkTargetHeights)}`);
               assert.deepEqual(pageErrors, [], `${scenario.name}: no uncaught JavaScript errors`);
               assert.deepEqual(failedRuntimeRequests, [], `${scenario.name}: runtime assets must load`);
 
+              if (scenario.name === 'desktop' || scenario.name === 'iphone-like') {
+                const viewports = scenario.name === 'desktop'
+                  ? [{ width: 820, height: 600 }, { width: 1600, height: 900 }, { width: 1280, height: 800 }]
+                  : [{ width: 320, height: 568 }, { width: 430, height: 932 }, { width: 390, height: 844 }];
+                let previousFrameCount = await page.evaluate(() => window.__ENTANGLED_PERF__?.frameCount ?? 0);
+                for (const viewport of viewports) {
+                  await page.setViewportSize(viewport);
+                  await page.waitForTimeout(350);
+                  const resized = await page.evaluate(() => {
+                    const canvas = document.querySelector('canvas#scene');
+                    return {
+                      viewport: { width: window.innerWidth, height: window.innerHeight },
+                      canvas: canvas ? {
+                        width: canvas.width,
+                        height: canvas.height,
+                        cssWidth: canvas.getBoundingClientRect().width,
+                        cssHeight: canvas.getBoundingClientRect().height,
+                      } : null,
+                      profile: window.__ENTANGLED_PERF__ ? {
+                        frameCount: window.__ENTANGLED_PERF__.frameCount,
+                        renderPixelBudget: window.__ENTANGLED_PERF__.renderPixelBudget,
+                        renderScale: window.__ENTANGLED_PERF__.renderScale,
+                      } : null,
+                      fallback: document.documentElement.classList.contains('no-webgl'),
+                    };
+                  });
+                  assert.ok(resized.canvas, `${scenario.name}: canvas must survive viewport resize`);
+                  assert.equal(resized.fallback, false, `${scenario.name}: resize should not fall back or freeze`);
+                  assert.ok(Math.abs(resized.canvas.cssWidth - resized.viewport.width) <= 1,
+                    `${scenario.name}: canvas width should follow viewport ${JSON.stringify(resized)}`);
+                  assert.ok(Math.abs(resized.canvas.cssHeight - resized.viewport.height) <= 1,
+                    `${scenario.name}: canvas height should follow viewport ${JSON.stringify(resized)}`);
+                  assert.ok(resized.canvas.width * resized.canvas.height <= resized.profile.renderPixelBudget + 10000,
+                    `${scenario.name}: resize must respect pixel budget ${JSON.stringify(resized)}`);
+                  assert.ok(resized.profile.frameCount > previousFrameCount,
+                    `${scenario.name}: render callbacks should continue after resize ${JSON.stringify(resized)}`);
+                  previousFrameCount = resized.profile.frameCount;
+                }
+                console.log('RESIZE_REGRESSION_PASSED', scenario.name, JSON.stringify(viewports));
+              }
+
               await context.close();
             }
+
+            // Delay the large runtime on purpose. The CSS visual must show on first paint
+            // instead of leaving a blank black page while WebGL libraries download.
+            const startupContext = await browser.newContext({ viewport: { width: 900, height: 700 } });
+            await startupContext.route('**/three.r157.min.js', async (route) => {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              await route.continue();
+            });
+            const startupPage = await startupContext.newPage();
+            const startupErrors = [];
+            startupPage.on('pageerror', (error) => startupErrors.push(error.message));
+            const startupResponse = await startupPage.goto(process.env.BASE_URL, {
+              waitUntil: 'commit',
+              timeout: 45000,
+            });
+            assert.equal(startupResponse?.status(), 200);
+            await startupPage.waitForSelector('.fallback', { state: 'visible', timeout: 15000 });
+            await startupPage.waitForTimeout(100);
+            const immediatePaint = await startupPage.evaluate(() => ({
+              fallbackDisplay: getComputedStyle(document.querySelector('.fallback')).display,
+              sphereSize: document.querySelector('.fallback-sphere').getBoundingClientRect().width,
+              webglReady: document.documentElement.classList.contains('webgl-ready'),
+            }));
+            assert.equal(immediatePaint.fallbackDisplay, 'grid', 'CSS artwork should be visible before heavy runtime load');
+            assert.ok(immediatePaint.sphereSize > 0, 'instant placeholder should have a visible size');
+            assert.equal(immediatePaint.webglReady, false, 'real artwork should replace placeholder only after startup');
+            await startupPage.waitForFunction(() =>
+              document.documentElement.classList.contains('webgl-ready') ||
+              document.documentElement.classList.contains('no-webgl'), null, { timeout: 45000 });
+            assert.equal(await startupPage.evaluate(() => document.documentElement.classList.contains('webgl-ready')), true,
+              'real renderer should replace the placeholder after loading');
+            assert.deepEqual(startupErrors, [], 'delayed startup should have no uncaught JavaScript errors');
+            await startupContext.close();
 
             // Simulate a browser where neither WebGL API is exposed. Avoid importing the
             // heavy runtime and verify the low-cost CSS fallback instead.
