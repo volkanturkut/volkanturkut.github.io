@@ -92,6 +92,9 @@ function installResponsiveResizeSupport() {
 }
 
 function revealAfterFirstRender(timeoutId, canvasObserver) {
+  // Use the unthrottled browser scheduler for this tiny readiness check.
+  // The renderer owns the throttled loop, so sharing its queue can starve us.
+  const scheduleCheck = window.__ENTANGLED_NATIVE_RAF__ || window.requestAnimationFrame.bind(window);
   const checkForRenderedFrames = () => {
     if (window.__ENTANGLED_STOP_RENDERING__) return;
 
@@ -105,10 +108,10 @@ function revealAfterFirstRender(timeoutId, canvasObserver) {
       return;
     }
 
-    window.requestAnimationFrame(checkForRenderedFrames);
+    scheduleCheck(checkForRenderedFrames);
   };
 
-  window.requestAnimationFrame(checkForRenderedFrames);
+  scheduleCheck(checkForRenderedFrames);
 }
 
 async function startArtwork() {
