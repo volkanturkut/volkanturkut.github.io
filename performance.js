@@ -4,18 +4,20 @@ const STANDARD_PARTICLES = 32_768;
 
 /**
  * Install a conservative rendering profile before loading the artwork.
- * Native ES modules let these source files run directly in any modern browser:
- * no framework, package manager, bundler, or external runtime is needed.
+ * Native ES modules keep the site framework-free and avoid external runtimes.
  */
 export function initializePerformanceProfile() {
   const nativeDevicePixelRatio = () => Number(window.devicePixelRatio) || 1;
   const cores = Number(navigator.hardwareConcurrency) || 0;
   const memory = Number(navigator.deviceMemory) || 0;
   const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+
+  // Treat touch devices with incomplete hardware reporting conservatively.
+  // Safari often omits deviceMemory, even on modern phones and tablets.
   const lowResource =
     (cores > 0 && cores <= 4) ||
     (memory > 0 && memory <= 4) ||
-    (coarsePointer && cores > 0 && cores <= 6) ||
+    (coarsePointer && (cores === 0 || cores <= 6 || memory === 0)) ||
     (!cores && !memory);
 
   const particleCount = lowResource ? LOW_RESOURCE_PARTICLES : STANDARD_PARTICLES;
@@ -28,8 +30,8 @@ export function initializePerformanceProfile() {
 
   window.__ENTANGLED_PERF_PARTICLES__ = particleCount;
 
-  // Keep the browser's native devicePixelRatio intact. The tuned renderer
-  // reads this private, resize-aware scale to limit WebGL work.
+  // Keep the browser's native devicePixelRatio intact. The renderer reads this
+  // resize-aware value to limit GPU allocation on high-DPI and large displays.
   try {
     Object.defineProperty(window, "__ENTANGLED_RENDER_SCALE__", {
       configurable: true,
@@ -50,13 +52,11 @@ export function initializePerformanceProfile() {
   let lastFrameTimestamp = Number.NEGATIVE_INFINITY;
   let renderedFrameCount = 0;
 
-  // Maintain compositor-aligned animation while limiting how often the
-  // expensive generator is allowed to update.
+  // Preserve native animation scheduling, but avoid rendering above the device
+  // budget. Hidden pages do no expensive generator work.
   window.requestAnimationFrame = (callback) => nativeRequestAnimationFrame((timestamp) => {
     if (window.__ENTANGLED_STOP_RENDERING__) return;
 
-    // Avoid running generator callbacks in background tabs. The native frame
-    // scheduler will resume the pending callback when the page becomes visible.
     if (document.visibilityState === "hidden") {
       window.requestAnimationFrame(callback);
       return;
@@ -78,7 +78,7 @@ export function initializePerformanceProfile() {
   });
 
   window.__ENTANGLED_PERF__ = Object.freeze({
-    build: "low-end-r12",
+    build: "low-end-r13",
     particleCount,
     hardwareClass: lowResource ? "low" : "standard",
     lowResource,
