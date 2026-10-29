@@ -62,10 +62,12 @@ jobs:
           const stylesheet = readFileSync('styles.css', 'utf8');
           assert.ok(html.includes('href="./styles.css"'), 'page should load an external stylesheet');
           assert.ok(html.includes('src="./app.js"'), 'page should use the native ES module entry point');
+          assert.ok(html.includes('<title>Volkan Turkut</title>'), 'browser tab title should use the portfolio name');
+          assert.ok(!html.includes('<title>Entangled'), 'artwork title should not appear in the browser tab name');
           assert.ok(html.includes('<noscript><style>.fallback { display: grid; }</style></noscript>'), 'a CSS-only artwork fallback must appear if JavaScript is disabled');
           const originalScripts = [
-            'await import("./three.r157.min.js")',
-            'loadClassicScript("./fxhash.min.js")',
+            'const threePromise = import("./three.r157.min.js")',
+            'const fxhashPromise = loadClassicScript("./fxhash.min.js")',
             'await import("./bundle.min.js")',
           ];
           const offsets = originalScripts.map((s) => appSource.indexOf(s));
@@ -104,11 +106,13 @@ jobs:
 
           assert.ok(!html.includes('favicon.svg'), 'custom non-original favicon should not be referenced');
           assert.ok(stylesheet.includes('html.no-webgl .fallback'), 'a low-cost fallback visual must be available without WebGL');
-          assert.ok(stylesheet.includes('min-height: 24px'), 'footer links should have mobile-friendly 24px touch target height');
+          assert.ok(stylesheet.includes('html.webgl-ready .fallback'), 'instant placeholder should hide only after a rendered frame');
+          assert.ok(stylesheet.includes('filter: saturate(1.55) contrast(1.16) brightness(1.06)'), 'artwork colors should have enhanced saturation and contrast');
+          assert.ok(stylesheet.includes('min-height: 36px'), 'footer links should have mobile-friendly 36px touch target height');
           assert.ok(stylesheet.includes('display: inline-flex'), 'footer touch target sizing must apply to inline anchors');
           assert.ok(appSource.includes('WebGLRenderingContext'), 'the WebGL capability check must remain enabled');
           assert.ok(performanceSource.includes('__ENTANGLED_PERF__'), 'performance profile should be visible for automated smoke checks');
-          assert.ok(performanceSource.includes('build: "low-end-r12"'), 'deployment profile marker should be present for live browser verification');
+          assert.ok(performanceSource.includes('build: "low-end-r13"'), 'deployment profile marker should be present for live browser verification');
           assert.ok(performanceSource.includes('maxDevicePixelRatio,'), 'adaptive DPR cap must be exposed in the performance profile');
           assert.ok(performanceSource.includes('getTargetFrameRate'), 'reduced-motion and adaptive frame caps should remain enabled');
           assert.ok(appSource.includes('window.__ENTANGLED_STOP_RENDERING__ = true;'), 'fallback must signal the renderer to stop');
@@ -121,11 +125,14 @@ jobs:
           assert.ok(performanceSource.includes('MAX_RENDER_PIXELS = 1_000_000'), 'render-pixel budget must stay capped at one megapixel');
           assert.ok(performanceSource.includes('renderPixelBudget: MAX_RENDER_PIXELS'), 'render-pixel budget should remain enabled');
           assert.ok(appSource.includes('await import("./bundle.min.js")'), 'bundle should load only through the WebGL-aware module loader');
-          assert.ok(appSource.includes('await import("./three.r157.min.js")'), 'Three.js must load only after WebGL capability check');
+          assert.ok(appSource.includes('const threePromise = import("./three.r157.min.js")'), 'Three.js must load only after WebGL capability check');
           assert.ok(appSource.includes('loadClassicScript("./fxhash.min.js")'), 'fxhash runtime must load only after WebGL capability check');
+          assert.ok(appSource.includes('Promise.all([threePromise, fxhashPromise])'), 'independent renderer dependencies should download in parallel');
+          assert.ok(appSource.includes('window.visualViewport?.addEventListener("resize", queueResize'), 'mobile viewport changes should trigger renderer resizing');
+          assert.ok(appSource.includes('root.classList.add("webgl-ready")'), 'placeholder should remain until the renderer begins producing frames');
           assert.ok(appSource.includes('MutationObserver'), 'canvas recovery and accessibility setup should use a DOM observer');
           assert.ok(appSource.includes('webglcontextlost'), 'WebGL context loss should trigger the lightweight fallback');
-          assert.ok(appSource.includes('window.__ENTANGLED_PERF__?.frameCount > 0'), 'startup watchdog must require a first scheduled frame, not just an allocated canvas');
+          assert.ok(appSource.includes('window.__ENTANGLED_PERF__?.frameCount >= 3'), 'startup watchdog must require a first scheduled frame, not just an allocated canvas');
           assert.ok(appSource.includes('The renderer did not begin rendering within 30 seconds.'), 'startup timeout must be diagnosable and testable');
           assert.ok(appSource.includes('if (startupTimedOut) return;'), 'a stalled renderer must not continue importing heavy runtime files after timeout');
           for (const runtime of ['three.r157.min.js', 'fxhash.min.js', 'bundle.min.js']) {
@@ -136,6 +143,7 @@ jobs:
           const optimizedBundle = readFileSync('bundle.min.js', 'utf8');
           assert.ok(optimizedBundle.includes('Tn=Je.__ENTANGLED_RENDER_SCALE__||(Je.devicePixelRatio?Je.devicePixelRatio:1)'), 'renderer must use the capped internal DPR scale');
           assert.ok(optimizedBundle.includes('function na(){Tn=Je.__ENTANGLED_RENDER_SCALE__||(Je.devicePixelRatio?Je.devicePixelRatio:1);Cn&&Cn.setPixelRatio(Tn)'), 'renderer DPR must recalculate on resize');
+          assert.ok(optimizedBundle.includes('e=setTimeout(na,80)'), 'expensive canvas resizing must be debounced to prevent mobile resize stalls');
           assert.ok(optimizedBundle.includes('Ht=!0,Tt.id=0==V?1:-1,Tt.visibility=0==V?1:0,Tt.visibilityTarget=0==V?1:0'), 'single-window mode must initialize exactly one visible renderer instance');
           assert.ok(optimizedBundle.includes('Tt.resolvedIteration=D.resolved()'), 'single-window instance must receive the current resolved iteration');
           assert.ok(optimizedBundle.includes('$t=1'), 'standalone visual must have a valid single top-window identifier');
