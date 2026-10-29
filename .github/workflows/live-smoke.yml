@@ -41,7 +41,7 @@ jobs:
           for _ in $(seq 1 36); do
             if curl --fail --location --silent --show-error --max-time 10 \
               "$base/styles.css" --output "$tmp/styles-ready.css" &&
-              grep -Fq 'min-height: 24px' "$tmp/styles-ready.css"; then
+              grep -Fq 'min-height: 36px' "$tmp/styles-ready.css"; then
               ready=1
               break
             fi
@@ -57,7 +57,7 @@ jobs:
             fetch_asset "$asset" "$asset"
           done
 
-          grep -Fq '<title>Entangled — Volkan Turkut</title>' "$tmp/index.html"
+          grep -Fq '<title>Volkan Turkut</title>' "$tmp/index.html"
           grep -Fq 'href="./styles.css"' "$tmp/index.html"
           grep -Fq 'src="./app.js"' "$tmp/index.html"
           grep -Fq 'https://volkanturkut.artstation.com/' "$tmp/index.html"
@@ -65,8 +65,8 @@ jobs:
           grep -Fq 'https://github.com/volkanturkut' "$tmp/index.html"
           grep -Fq 'The renderer did not begin rendering within 30 seconds.' "$tmp/app.js"
           grep -Fq 'window.__ENTANGLED_STOP_RENDERING__ = true;' "$tmp/app.js"
-          grep -Fq 'build: "low-end-r12"' "$tmp/performance.js"
-          grep -Fq 'min-height: 24px' "$tmp/styles.css"
+          grep -Fq 'build: "low-end-r13"' "$tmp/performance.js"
+          grep -Fq 'min-height: 36px' "$tmp/styles.css"
 
           archive_status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' "$base/original-source/versions/v0-original-entangled/index.html")"
           if [[ "$archive_status" != "404" ]]; then
