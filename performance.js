@@ -49,6 +49,7 @@ export function initializePerformanceProfile() {
     ? 15
     : lowResource ? 24 : 30;
   const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
+  window.__ENTANGLED_NATIVE_RAF__ = nativeRequestAnimationFrame;
   let lastFrameTimestamp = Number.NEGATIVE_INFINITY;
   let renderedFrameCount = 0;
 
