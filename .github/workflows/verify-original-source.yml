@@ -115,6 +115,8 @@ jobs:
           assert.ok(performanceSource.includes('build: "low-end-r13"'), 'deployment profile marker should be present for live browser verification');
           assert.ok(performanceSource.includes('maxDevicePixelRatio,'), 'adaptive DPR cap must be exposed in the performance profile');
           assert.ok(performanceSource.includes('getTargetFrameRate'), 'reduced-motion and adaptive frame caps should remain enabled');
+          assert.ok(performanceSource.includes('window.__ENTANGLED_NATIVE_RAF__ = nativeRequestAnimationFrame'), 'startup readiness checks must bypass the throttled renderer queue');
+          assert.ok(appSource.includes('window.__ENTANGLED_NATIVE_RAF__ || window.requestAnimationFrame.bind(window)'), 'first-frame readiness check must not be starved by the frame cap');
           assert.ok(appSource.includes('window.__ENTANGLED_STOP_RENDERING__ = true;'), 'fallback must signal the renderer to stop');
           assert.ok(performanceSource.includes('if (window.__ENTANGLED_STOP_RENDERING__) return;'), 'queued animation callbacks must stop after fallback');
           assert.ok(performanceSource.includes('document.visibilityState === "hidden"'), 'hidden tabs should not run the expensive generator callback');
