@@ -1,5 +1,6 @@
-const MAX_RENDER_PIXELS = 1_000_000;
-const LOW_RESOURCE_PARTICLES = 16_384;
+const STANDARD_RENDER_PIXELS = 1_000_000;
+const LOW_RESOURCE_RENDER_PIXELS = 600_000;
+const LOW_RESOURCE_PARTICLES = 8_192;
 const STANDARD_PARTICLES = 32_768;
 
 /**
@@ -14,18 +15,20 @@ export function initializePerformanceProfile() {
 
   // Treat touch devices with incomplete hardware reporting conservatively.
   // Safari often omits deviceMemory, even on modern phones and tablets.
-  const lowResource =
+  const lowResource = coarsePointer ||
     (cores > 0 && cores <= 4) ||
     (memory > 0 && memory <= 4) ||
-    (coarsePointer && (cores === 0 || cores <= 6 || memory === 0)) ||
     (!cores && !memory);
+  const renderPixelBudget = lowResource
+    ? LOW_RESOURCE_RENDER_PIXELS
+    : STANDARD_RENDER_PIXELS;
 
   const particleCount = lowResource ? LOW_RESOURCE_PARTICLES : STANDARD_PARTICLES;
   const maxDevicePixelRatio = lowResource ? 1.0 : 1.25;
   const getRenderScale = () => Math.min(
     maxDevicePixelRatio,
     nativeDevicePixelRatio(),
-    Math.sqrt(MAX_RENDER_PIXELS / Math.max(1, window.innerWidth * window.innerHeight))
+    Math.sqrt(renderPixelBudget / Math.max(1, window.innerWidth * window.innerHeight))
   );
 
   window.__ENTANGLED_PERF_PARTICLES__ = particleCount;
@@ -47,7 +50,7 @@ export function initializePerformanceProfile() {
   const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   const getTargetFrameRate = () => reducedMotionQuery.matches
     ? 15
-    : lowResource ? 24 : 30;
+    : lowResource ? 20 : 30;
   const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
   window.__ENTANGLED_NATIVE_RAF__ = nativeRequestAnimationFrame;
   let lastFrameTimestamp = Number.NEGATIVE_INFINITY;
@@ -58,7 +61,7 @@ export function initializePerformanceProfile() {
   window.requestAnimationFrame = (callback) => nativeRequestAnimationFrame((timestamp) => {
     if (window.__ENTANGLED_STOP_RENDERING__) return;
 
-    if (document.visibilityState === "hidden") {
+    if (document.visibilityState === "hidden" || window.__ENTANGLED_RESIZE_ACTIVE__) {
       window.requestAnimationFrame(callback);
       return;
     }
@@ -79,12 +82,12 @@ export function initializePerformanceProfile() {
   });
 
   window.__ENTANGLED_PERF__ = Object.freeze({
-    build: "low-end-r13",
+    build: "low-end-r14",
     particleCount,
     hardwareClass: lowResource ? "low" : "standard",
     lowResource,
     maxDevicePixelRatio,
-    renderPixelBudget: MAX_RENDER_PIXELS,
+    renderPixelBudget,
     get targetFramesPerSecond() { return getTargetFrameRate(); },
     get reducedMotion() { return reducedMotionQuery.matches; },
     get renderScale() { return getRenderScale(); },
