@@ -61,7 +61,7 @@ export function initializePerformanceProfile() {
   window.requestAnimationFrame = (callback) => nativeRequestAnimationFrame((timestamp) => {
     if (window.__ENTANGLED_STOP_RENDERING__) return;
 
-    if (document.visibilityState === "hidden" || window.__ENTANGLED_RESIZE_ACTIVE__) {
+    if (document.visibilityState === "hidden") {
       window.requestAnimationFrame(callback);
       return;
     }
@@ -72,7 +72,14 @@ export function initializePerformanceProfile() {
       return;
     }
 
+    // Keep the scheduler throttled during resize too, but do not call the
+    // expensive generator until its debounced render targets are stable.
     lastFrameTimestamp = timestamp;
+    if (window.__ENTANGLED_RESIZE_ACTIVE__) {
+      window.requestAnimationFrame(callback);
+      return;
+    }
+
     renderedFrameCount += 1;
     callback(timestamp);
   });
