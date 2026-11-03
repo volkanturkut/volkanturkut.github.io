@@ -154,7 +154,7 @@ async function startArtwork() {
   let startupTimedOut = false;
   const canvasObserver = observeRendererCanvas();
   // A sized canvas is not enough: wait for actual animation callbacks before
-  // dismissing the instant CSS artwork or stopping the loading watchdog.
+  // marking the black loading surface as complete or stopping the watchdog.
   const timeoutId = window.setTimeout(() => {
     const canvas = document.querySelector("canvas#scene");
     const rendererStarted = Boolean(
@@ -180,8 +180,15 @@ async function startArtwork() {
     initializePerformanceProfile();
     const queueResize = installResponsiveResizeSupport();
 
-    // Download independent dependencies together to reduce time-to-first-art.
-    // The generator itself is imported only after both globals are ready.
+    // Warm the generator module while its global dependencies download.
+    // This keeps the second stage of startup from waiting on a fresh fetch.
+    const bundlePreload = document.createElement("link");
+    bundlePreload.rel = "modulepreload";
+    bundlePreload.href = new URL("./bundle.min.js", import.meta.url).href;
+    bundlePreload.fetchPriority = "high";
+    document.head.append(bundlePreload);
+
+    // The generator itself is evaluated only after both globals are ready.
     const threePromise = import("./three.r157.min.js");
     const fxhashPromise = loadClassicScript("./fxhash.min.js");
     await Promise.all([threePromise, fxhashPromise]);
