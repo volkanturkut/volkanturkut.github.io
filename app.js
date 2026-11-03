@@ -70,24 +70,53 @@ function observeRendererCanvas() {
 }
 
 function installResponsiveResizeSupport() {
-  // Mobile browser chrome and device rotation can change the visible viewport
-  // without producing a useful window resize event on every browser.
+  // Browser chrome, split-screen resizing, desktop window resizing, and
+  // orientation changes do not emit identical events on every platform.
+  // Observe the actual artwork viewport as well as native viewport signals.
   let resizeTimer = 0;
-  const queueResize = () => {
-    window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(() => {
-      if (document.visibilityState === "visible") {
-        window.dispatchEvent(new Event("resize"));
-      }
-    }, 100);
+  let resumeTimer = 0;
+  let dispatchingResize = false;
+
+  const markResizing = () => {
+    window.__ENTANGLED_RESIZE_ACTIVE__ = true;
+    window.clearTimeout(resumeTimer);
+    // Keep expensive particle updates paused until the renderer's own
+    // debounced resize handler has rebuilt its drawing buffers.
+    resumeTimer = window.setTimeout(() => {
+      window.__ENTANGLED_RESIZE_ACTIVE__ = false;
+    }, 240);
   };
 
+  const queueResize = () => {
+    markResizing();
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      if (document.visibilityState !== "visible") return;
+      dispatchingResize = true;
+      window.dispatchEvent(new Event("resize"));
+      dispatchingResize = false;
+    }, 70);
+  };
+
+  // Native desktop resize already reaches the renderer. We only use it to
+  // suspend drawing during rapid changes; the other signals are normalized.
+  window.addEventListener("resize", () => {
+    if (!dispatchingResize) markResizing();
+  }, { passive: true });
   window.visualViewport?.addEventListener("resize", queueResize, { passive: true });
   window.addEventListener("orientationchange", queueResize, { passive: true });
+  window.screen?.orientation?.addEventListener?.("change", queueResize);
   window.addEventListener("pageshow", queueResize, { passive: true });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") queueResize();
   });
+
+  const artwork = document.querySelector(".artwork");
+  if (artwork && "ResizeObserver" in window) {
+    const observer = new ResizeObserver(queueResize);
+    observer.observe(artwork);
+  }
+
   return queueResize;
 }
 
