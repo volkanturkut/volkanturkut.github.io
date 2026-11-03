@@ -173,24 +173,23 @@ async function startArtwork() {
   }, RENDERER_TIMEOUT_MS);
 
   try {
-    // Install conservative limits before loading the renderer. The module stays
-    // unloaded on unsupported browsers, keeping their fallback path lightweight.
-    const { initializePerformanceProfile } = await import("./performance.js");
-    if (startupTimedOut) return;
-    initializePerformanceProfile();
-    const queueResize = installResponsiveResizeSupport();
-
-    // Warm the generator module while its global dependencies download.
-    // This keeps the second stage of startup from waiting on a fresh fetch.
+    // Start independent local downloads together as soon as WebGL is detected.
+    // The bundle is only preloaded here; it is evaluated after globals exist.
+    const performancePromise = import("./performance.js");
     const bundlePreload = document.createElement("link");
     bundlePreload.rel = "modulepreload";
     bundlePreload.href = new URL("./bundle.min.js", import.meta.url).href;
     bundlePreload.fetchPriority = "high";
     document.head.append(bundlePreload);
-
-    // The generator itself is evaluated only after both globals are ready.
     const threePromise = import("./three.r157.min.js");
     const fxhashPromise = loadClassicScript("./fxhash.min.js");
+
+    // Install conservative limits before the generator module is evaluated.
+    const { initializePerformanceProfile } = await performancePromise;
+    if (startupTimedOut) return;
+    initializePerformanceProfile();
+    const queueResize = installResponsiveResizeSupport();
+
     await Promise.all([threePromise, fxhashPromise]);
     if (startupTimedOut) return;
 
