@@ -67,6 +67,8 @@ jobs:
           grep -Fq 'window.__ENTANGLED_STOP_RENDERING__ = true;' "$tmp/app.js"
           grep -Fq 'build: "low-end-r14"' "$tmp/performance.js"
           grep -Fq 'min-height: 40px' "$tmp/styles.css"
+          ! grep -Fq 'fallback-sphere' "$tmp/styles.css"
+          ! grep -Fq 'fallback-sphere' "$tmp/index.html"
 
           archive_status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' "$base/original-source/versions/v0-original-entangled/index.html")"
           if [[ "$archive_status" != "404" ]]; then
