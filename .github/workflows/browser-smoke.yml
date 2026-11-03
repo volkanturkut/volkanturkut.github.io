@@ -191,6 +191,7 @@ jobs:
                   firstLinkFontSize: getComputedStyle(document.querySelector('.links a')).fontSize,
                   canvasFilter: canvas ? getComputedStyle(canvas).filter : null,
                   webglReady: document.documentElement.classList.contains('webgl-ready'),
+                  coarsePointer: matchMedia('(pointer: coarse)').matches,
                   viewport: { width: window.innerWidth, height: window.innerHeight },
                   documentSize: {
                     width: document.documentElement.scrollWidth,
@@ -269,6 +270,10 @@ jobs:
               assert.equal(state.profile.particleCount, state.profile.hardwareClass === 'low' ? 8192 : 32768);
               assert.equal(state.profile.maxDevicePixelRatio, state.profile.hardwareClass === 'low' ? 1.0 : 1.25);
               assert.equal(state.profile.lowResource, state.profile.hardwareClass === 'low');
+              if (['iphone-like', 'small-android-like', 'tablet'].includes(scenario.name)) {
+                assert.equal(state.coarsePointer, true, `${scenario.name}: test must emulate a touch-first pointer`);
+                assert.equal(state.profile.lowResource, true, `${scenario.name}: touch-first devices must receive the safer low-resource profile`);
+              }
               assert.equal(state.profile.renderPixelBudget, state.profile.hardwareClass === 'low' ? 600000 : 1000000);
               assert.ok(state.profile.renderScale > 0 && state.profile.renderScale <= 1.25);
               assert.equal(state.profile.targetFramesPerSecond, state.profile.reducedMotion ? 15 : state.profile.lowResource ? 20 : 30);
