@@ -2,7 +2,7 @@
   color-scheme: dark;
   --color-background: #000;
   --color-foreground: #f4f5f2;
-  --color-muted: #c0c4bd;
+  --color-muted: #e0e2dd;
   --font-ui: "Courier New", Courier, monospace;
   --footer-gutter: clamp(16px, 4vw, 28px);
 }
@@ -47,7 +47,7 @@ canvas#scene {
   max-width: 100%;
   touch-action: none;
   /* Increase color separation on older or poorly calibrated displays. */
-  filter: saturate(1.55) contrast(1.16) brightness(1.06);
+  filter: saturate(1.7) contrast(1.22) brightness(1.08);
 }
 
 .footer {
@@ -67,8 +67,8 @@ canvas#scene {
 .creator {
   margin: 0;
   color: var(--color-foreground);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 650;
   letter-spacing: 0.16em;
   line-height: 1.5;
   text-transform: uppercase;
@@ -91,11 +91,11 @@ canvas#scene {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
+  min-height: 40px;
   padding-inline: 5px;
   color: var(--color-muted);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0.025em;
   text-decoration: none;
   text-shadow: 0 1px 10px rgb(0 0 0 / 85%);
@@ -112,26 +112,13 @@ canvas#scene {
   outline: 2px solid #fff;
 }
 
-/* This lightweight artwork appears on the very first paint, while WebGL
-   downloads and initializes. It stays visible when WebGL is unavailable. */
+/* The fallback deliberately remains an empty black surface. */
 .fallback {
   position: absolute;
   inset: 0;
   display: grid;
-  place-items: center;
+  background: var(--color-background);
   pointer-events: none;
-}
-
-.fallback-sphere {
-  width: min(70vmin, 420px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 57% 43%, rgb(255 105 76 / 100%) 0 2.4%, transparent 3.5%),
-    radial-gradient(circle at 46% 43%, transparent 0 28%, rgb(40 255 155 / 95%) 29% 31%, transparent 32%),
-    radial-gradient(circle at 50% 50%, transparent 0 40%, rgb(35 235 140 / 85%) 41% 44%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgb(10 205 112 / 32%), transparent 68%);
-  filter: drop-shadow(0 0 36px rgb(0 255 140 / 24%)) contrast(1.2) saturate(1.5);
 }
 
 html.webgl-ready .fallback {
@@ -153,7 +140,7 @@ html.no-webgl canvas#scene {
   }
 
   .creator {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .links {
@@ -161,8 +148,8 @@ html.no-webgl canvas#scene {
   }
 
   .links a {
-    min-height: 36px;
-    font-size: 12px;
+    min-height: 40px;
+    font-size: 13px;
   }
 }
 
